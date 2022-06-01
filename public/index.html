@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Website created during MetaBUILD hackathon" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Baloo+Tamma+2::400,500,700,800&display=swap"
+    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link href="https://unpkg.com/maplibre-gl@2.1.1/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <style>
+      .maplibregl-popup-content {
+        padding: 400px;
+        width: 406px;
+        height: 288px;
+        /* max-height: 378px; */
+        background: rgba(11, 18, 22, 0.9);
+        padding: 16px;
+        box-shadow: 0px 4px 50px rgba(0, 0, 0, 0.1);
+        border-radius: 25px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+      .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+      .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+        border-bottom-color: rgba(11, 18, 22, 0.9);
+      }
+      .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+      .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+      .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+        border-top-color: rgba(11, 18, 22, 0.9);
+      }
+      .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+        border-right-color: rgba(11, 18, 22, 0.9);
+      }
+      .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+        border-left-color: rgba(11, 18, 22, 0.9);
+      }
+    </style>
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>MetaGate</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

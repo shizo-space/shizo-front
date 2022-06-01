@@ -1,0 +1,26 @@
+specVersion: 0.0.2
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: metagate
+    network: thetatest
+    source:
+      abi: metagate
+      address: "0xA4DC53390d33CfC7dc48DFDA64234F4e05E8d20c"
+      startBlock: 15223543
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: metagate/metagate.wasm
+      entities:
+        - Transfer
+      abis:
+        - name: metagate
+          file: metagate/src/abis/metagate.json
+      eventHandlers:
+        - handler: handleTransfer
+          event: Transfer(indexed address,indexed address,indexed uint256)
+        - handler: handlePurchase
+          event: Purchase(indexed address,indexed address,indexed uint256,uint256)

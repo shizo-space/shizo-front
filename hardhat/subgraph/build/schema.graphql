@@ -1,0 +1,27 @@
+type Transfer @entity {
+  id: ID!
+
+  from: String!
+  to: String!
+  tokenId: BigInt!
+  timestamp: BigInt!
+
+}
+
+type Mint @entity {
+  id: ID!
+
+  to: String!
+  tokenId: BigInt!
+  timestamp: BigInt!
+}
+
+type Purchase @entity {
+  id: ID!
+
+  seller: String!
+  buyer: String!
+  tokenId: BigInt!
+  price: BigInt!
+  timestamp: BigInt!
+}

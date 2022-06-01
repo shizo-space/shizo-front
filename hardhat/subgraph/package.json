@@ -1,0 +1,21 @@
+{
+  "name": "metagate-subgraph",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "codegen": " graph codegen subgraph.yaml",
+    "build": "graph build subgraph.yaml",
+    "deploy-graph": "graph deploy --product hosted-service metagate/metagate subgraph.yaml",
+    "create-local": "graph create --node http://localhost:8020/ metagate/metagate subgraph.yaml",
+    "remove-local": "graph remove --node http://localhost:8020/ metagate/metagate subgraph.yaml",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 metagate/metagate subgraph.yaml",
+    "create": "graph create --node http://172.105.86.80:8020/ metagate/metagate subgraph.yaml",
+    "remove": "graph remove --node http://172.105.86.80:8020/ metagate/metagate subgraph.yaml",
+    "deploy": "graph deploy --node http://172.105.86.80:8020/ --ipfs http://172.105.86.80:5001 metagate/metagate subgraph.yaml"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.29.0",
+    "@graphprotocol/graph-ts": "^0.26.0"
+  }
+}
