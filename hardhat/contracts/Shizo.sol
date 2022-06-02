@@ -4,6 +4,8 @@ pragma solidity >=0.8.0 <0.9.0;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
+import 'hardhat/console.sol';
 
 contract Shizo is ERC721 {
   using Strings for uint256;
@@ -45,9 +47,24 @@ contract Shizo is ERC721 {
     uint lastTeleportTime;
   }
 
+  struct TransitStep {
+    uint256 tokenId;
+    int32 lat;
+    int32 lon;
+    uint16 distance;
+  }
+
+  struct Transit {
+    TransitStep[] steps;
+    uint departureTime;
+    uint8 t;
+  }
+
   mapping(uint256 => TeleportProps) public teleportProps;
   mapping(uint256 => Entity) public entities;
+  mapping(uint256 => bool) public blockedRoads;
   mapping(address => Position) public positions;
+  mapping(address => Transit) public transits;
 
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
   event LevelUp(address indexed owner, uint256 indexed land, uint256 level);
@@ -87,7 +104,7 @@ contract Shizo is ERC721 {
       buffer[0] = bytes1(uint8(45));
     }
     return string(buffer);
-    }
+  }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), 'ERC721Metadata: URI query for nonexistent token');
@@ -214,10 +231,48 @@ contract Shizo is ERC721 {
   function teleport(uint256 tokenId) external {
     require(ownerOf(tokenId) == msg.sender, 'Only owner can do this');
     require(entities[tokenId].t == 0, 'You can only teleport to lands');
-    require(teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime < block.timestamp, string(abi.encodePacked('You must wait ',
-    block.timestamp - (teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime), ' seconds before you can teleport again to this property')));
+    require(
+      teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime < block.timestamp,
+      string(abi.encodePacked('You must wait ',
+        block.timestamp - (teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime),
+        ' seconds before you can teleport again to this property')
+      )
+    );
 
     positions[ownerOf(tokenId)] = entities[tokenId].pos;
     teleportProps[tokenId].lastTeleportTime = block.timestamp;
+  }
+
+  function blockRoad(uint256 tokenId) external {
+    require(ownerOf(tokenId) == msg.sender, 'Only owner can do this');
+    require(entities[tokenId].t == 1, 'You can only block roads');
+    
+    blockedRoads[tokenId] = true;
+  }
+
+  // TODO should consume cinergy to do this action
+  // TODO steps should be a custom polyline for checking signatures
+  function transit(uint8 _type, TransitStep[] memory steps, bytes memory signature) external {
+    require(positions[msg.sender].lat == steps[0].lat, "Transit: Invalid starting position");
+    require(positions[msg.sender].lon == steps[0].lon, "Transit: Invalid starting position");
+    require(_type == 0 || _type == 1, 'Transit: Type is not valid');
+
+    bytes memory hashed;
+    hashed = abi.encodePacked('shizo:transit:');
+    for (uint i = 0; i < steps.length; i++) {
+      require(blockedRoads[steps[i].tokenId] == false, string(abi.encodePacked('Transit: The following tokenId is blocked: ', steps[i].tokenId.toString())));
+      if (i == 0) {
+        hashed = abi.encodePacked(string(hashed), steps[i].tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
+      } else {
+        hashed = abi.encodePacked(string(hashed), ',', steps[i].tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
+      }
+    }
+    address signer = hashed.toEthSignedMessageHash().recover(signature);
+    require(owner == signer, 'Invalid signature'); 
+    TransitStep[] memory transitSteps;
+    transits[msg.sender] = Transit(transitSteps, block.timestamp, _type);
+    for (uint i = 0; i < steps.length; i++) {
+      transits[msg.sender].steps[i] = (TransitStep(steps[i].tokenId, steps[i].lat, steps[i].lon, steps[i].distance));
+    }
   }
 }
