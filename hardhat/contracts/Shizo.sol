@@ -20,6 +20,11 @@ contract Shizo is ERC721 {
 
   uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
   uint256 public constant ROYALITY = 5; // 5%
+  uint8 public constant WALK_SPEED = 5;
+  uint8 public constant RUN_SPEED = 10;
+  uint8 public constant TAXI_SPEED = 16;
+
+  uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
 
   address linkTokenAddress = 0xa36085F69e2889c224210F603D836748e7dC0088;
   address oracleAddress = 0x74EcC8Bdeb76F2C6760eD2dc8A46ca5e581fA656;
@@ -60,16 +65,29 @@ contract Shizo is ERC721 {
     uint8 t;
   }
 
-  mapping(uint256 => TeleportProps) public teleportProps;
+  struct RoadBlockProps {
+    uint modifiedTime;
+    bool isBlock;
+  }
+
+  struct RoadBlockStorage {
+    uint startingIndex;
+    RoadBlockProps[] props;
+  }
+
+  mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
-  mapping(uint256 => bool) public blockedRoads;
-  mapping(address => Position) public positions;
+  mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
+  mapping(address => Position) private staticPositions;
   mapping(address => Transit) public transits;
+  // mapping(address => TransitStep[]) public transitSteps;
 
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
   event LevelUp(address indexed owner, uint256 indexed land, uint256 level);
 
   mapping(uint256 => TokenOnMarketplace) public marketplace;
+
+  error RoadBlocked(uint256 tokenId); 
 
   constructor(address _cinergy) ERC721('Shizo', 'Shizo') {
     cinergy = _cinergy;
@@ -128,6 +146,7 @@ contract Shizo is ERC721 {
     return entities[tokenId].t == 1;
   }
 
+  // TODO add padding to vars
   function mint(
     uint256 tokenId,
     uint8 _type,
@@ -139,17 +158,17 @@ contract Shizo is ERC721 {
     require(msg.value == PRICE, 'Price is not correct');
     require(!_exists(tokenId), 'token exists');
 
-    bytes memory hashed = abi.encodePacked(
+    bytes memory hashed = abi.encode(
       'shizo:mint:',
-      tokenId.toString(),
+      tokenId,
       ',',
-      _type.toString(),
+      _type,
       ',',
-      rarity.toString(),
+      rarity,
       ',',
-      toString(lat),
+      lat,
       ',',
-      toString(lon)
+      lon
     );
 
     address signer = hashed.toEthSignedMessageHash().recover(signature);
@@ -158,7 +177,7 @@ contract Shizo is ERC721 {
     _safeMint(msg.sender, tokenId);
     entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
     if (_type == 0) { // isLand
-      teleportProps[tokenId] = TeleportProps(300, 0);
+      teleportsProps[tokenId] = TeleportProps(300, 0);
     }
 
     TokenOnMarketplace memory tmp;
@@ -232,47 +251,110 @@ contract Shizo is ERC721 {
     require(ownerOf(tokenId) == msg.sender, 'Only owner can do this');
     require(entities[tokenId].t == 0, 'You can only teleport to lands');
     require(
-      teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime < block.timestamp,
+      teleportsProps[tokenId].cooldown + teleportsProps[tokenId].lastTeleportTime < block.timestamp,
       string(abi.encodePacked('You must wait ',
-        block.timestamp - (teleportProps[tokenId].cooldown + teleportProps[tokenId].lastTeleportTime),
+        block.timestamp - (teleportsProps[tokenId].cooldown + teleportsProps[tokenId].lastTeleportTime),
         ' seconds before you can teleport again to this property')
       )
     );
 
-    positions[ownerOf(tokenId)] = entities[tokenId].pos;
-    teleportProps[tokenId].lastTeleportTime = block.timestamp;
+    staticPositions[ownerOf(tokenId)] = entities[tokenId].pos;
+    teleportsProps[tokenId].lastTeleportTime = block.timestamp;
   }
 
-  function blockRoad(uint256 tokenId) external {
+  // TODO optimization for validProps (it's currently storage, maybe we should delete array elems on the fly)
+  function changeRoadLimitations(uint256 tokenId, bool isBlock) external {
     require(ownerOf(tokenId) == msg.sender, 'Only owner can do this');
     require(entities[tokenId].t == 1, 'You can only block roads');
-    
-    blockedRoads[tokenId] = true;
+    RoadBlockProps[] memory rBlockProps = roadBlockStorage[tokenId].props;
+    if (rBlockProps.length > 0 && rBlockProps[rBlockProps.length - 1].isBlock == isBlock) {
+      //use custom errors
+      revert('Already applied');
+    }
+    uint currentTime = block.timestamp;
+    for (uint i = rBlockProps.length - 1; i >= 0; i--) {
+      if (currentTime - rBlockProps[i].modifiedTime > MAX_DELTA_TIME) {
+        roadBlockStorage[tokenId].startingIndex = i;
+      }
+    }
+    roadBlockStorage[tokenId].props.push(RoadBlockProps(currentTime, isBlock));
   }
 
   // TODO should consume cinergy to do this action
   // TODO steps should be a custom polyline for checking signatures
-  function transit(uint8 _type, TransitStep[] memory steps, bytes memory signature) external {
-    require(positions[msg.sender].lat == steps[0].lat, "Transit: Invalid starting position");
-    require(positions[msg.sender].lon == steps[0].lon, "Transit: Invalid starting position");
+  // TODO use encode instead of encodePacked
+  // TODO error messages
+  function startTransit(uint8 _type, TransitStep[] memory steps, bytes memory signature) external {
+    require(staticPositions[msg.sender].lat == steps[0].lat, "Transit: Invalid starting position");
+    require(staticPositions[msg.sender].lon == steps[0].lon, "Transit: Invalid starting position");
     require(_type == 0 || _type == 1, 'Transit: Type is not valid');
 
     bytes memory hashed;
     hashed = abi.encodePacked('shizo:transit:');
     for (uint i = 0; i < steps.length; i++) {
-      require(blockedRoads[steps[i].tokenId] == false, string(abi.encodePacked('Transit: The following tokenId is blocked: ', steps[i].tokenId.toString())));
+      uint256 tokenId = steps[i].tokenId;
+      if (roadBlockStorage[tokenId].props.length > 0 && 
+        roadBlockStorage[tokenId].props[roadBlockStorage[tokenId].props.length - 1].isBlock && 
+        ownerOf(tokenId) != msg.sender) {
+        // TODO use custom errors
+        revert RoadBlocked(steps[i].tokenId);
+      }
+
       if (i == 0) {
-        hashed = abi.encodePacked(string(hashed), steps[i].tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
+        hashed = abi.encodePacked(string(hashed), tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
       } else {
-        hashed = abi.encodePacked(string(hashed), ',', steps[i].tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
+        hashed = abi.encodePacked(string(hashed), ',', tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', Strings.toString(steps[i].distance));
       }
     }
     address signer = hashed.toEthSignedMessageHash().recover(signature);
-    require(owner == signer, 'Invalid signature'); 
-    TransitStep[] memory transitSteps;
-    transits[msg.sender] = Transit(transitSteps, block.timestamp, _type);
+    require(owner == signer, 'Invalid signature');
+
     for (uint i = 0; i < steps.length; i++) {
-      transits[msg.sender].steps[i] = (TransitStep(steps[i].tokenId, steps[i].lat, steps[i].lon, steps[i].distance));
+      transits[msg.sender].steps.push(TransitStep(steps[i].tokenId, steps[i].lat, steps[i].lon, steps[i].distance));
     }
+    
+    transits[msg.sender].departureTime = block.timestamp;
+    transits[msg.sender].t = _type;
+  }
+
+  function setStaticPositionByTransit() external {
+    // TODO 
+    // staticPositions[msg.sender] = Position(lat, lon);
+  }
+
+  function getDistanceTraversed() external view returns (uint16) {
+    require(transits[msg.sender].departureTime != 0, 'No active transit');
+    Transit memory transit = transits[msg.sender];
+    uint16 deltaTime = uint16(block.timestamp - transit.departureTime);
+    require(deltaTime < MAX_DELTA_TIME, 'Invalid transit');
+    uint8 speed;
+    if (transit.t == 0) {
+      speed = WALK_SPEED;
+    } else if (transit.t == 1) {
+      speed = RUN_SPEED;
+    } else {
+      speed = TAXI_SPEED;
+    }
+
+    uint16 distance = deltaTime * speed;
+    uint16 sumDistance = 0;
+    uint time = transit.departureTime;
+    for (uint i = 0; i < transit.steps.length; i++) {
+      uint256 tokenId = transit.steps[i].tokenId;
+      for (uint j = roadBlockStorage[tokenId].props.length - 1; j >= 0; j--) {
+        if (roadBlockStorage[tokenId].props[j].modifiedTime < time && 
+          (j == 0 || roadBlockStorage[tokenId].props[j - 1].modifiedTime >= time) && roadBlockStorage[tokenId].props[j].isBlock) {
+          return sumDistance;
+        }
+      }
+      if (sumDistance + transit.steps[i].distance > distance) {
+        break;
+      } else {
+        sumDistance += transit.steps[i].distance;
+        time += transit.steps[i].distance / speed;
+      }
+    }
+
+    return distance;
   }
 }
