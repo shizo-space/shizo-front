@@ -86,7 +86,7 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), 'ERC721Metadata: URI query for nonexistent token');
 
-    string memory baseURI = 'https://map.metagate.land/features/';
+    string memory baseURI = 'https://map.metagate.land/features';
     return
       bytes(baseURI).length > 0
         ? string(abi.encodePacked(abi.encodePacked(baseURI, tokenId.toString()), '/metadata/'))

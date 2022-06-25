@@ -32,8 +32,8 @@ contract Shizo is ERC721 {
 
   struct TokenOnMarketplace {
     bool listing;
-    uint256 price;
     address publisher;
+    uint256 price;
   }
 
   struct Position {
@@ -54,27 +54,28 @@ contract Shizo is ERC721 {
   }
 
   struct TransitStep {
-    uint256 tokenId;
+    uint16 distance;
     int32 lat;
     int32 lon;
-    uint16 distance;
+    uint256 tokenId;
   }
 
   struct TransitStorage {
-    TransitStep[] steps;
-    uint256 stepsStartingIndex;
-    uint departureTime;
+    mapping(uint => TransitStep) steps;
     uint8 t;
+    uint stepsCount;
+    uint departureTime;
   }
 
   struct RoadBlockProps {
-    uint modifiedTime;
     bool isBlock;
+    uint modifiedTime;
   }
 
   struct RoadBlockStorage {
-    uint256 startingIndex;
-    RoadBlockProps[] props;
+    uint propsCount;
+    uint lastPropIndex;
+    mapping(uint => RoadBlockProps) props;
   }
 
   mapping(uint256 => TeleportProps) public teleportsProps;
@@ -82,7 +83,6 @@ contract Shizo is ERC721 {
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
   mapping(address => Position) private staticPositions;
   mapping(address => TransitStorage) public transits;
-  // mapping(address => TransitStep[]) public transitSteps;
 
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
   event LevelUp(address indexed owner, uint256 indexed land, uint256 level);
@@ -129,7 +129,7 @@ contract Shizo is ERC721 {
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), 'ERC721Metadata: URI query for nonexistent token');
 
-    string memory baseURI = 'https://map.metagate.land/features/';
+    string memory baseURI = 'https://map.metagate.land/features';
     return
       bytes(baseURI).length > 0
         ? string(abi.encodePacked(abi.encodePacked(baseURI, tokenId.toString()), '/metadata/'))
@@ -264,22 +264,35 @@ contract Shizo is ERC721 {
     teleportsProps[tokenId].lastTeleportTime = block.timestamp;
   }
 
-  // TODO optimization for validProps (it's currently storage, maybe we should delete array elems on the fly)
+  // TODO store props in a local var maybe save gas fee?
   function changeRoadLimitations(uint256 tokenId, bool isBlock) external {
     require(ownerOf(tokenId) == msg.sender, 'Only owner can do this');
     require(entities[tokenId].t == 1, 'You can only block roads');
-    RoadBlockProps[] memory rBlockProps = roadBlockStorage[tokenId].props;
-    if (rBlockProps.length > 0 && rBlockProps[rBlockProps.length - 1].isBlock == isBlock) {
-      //use custom errors
+    uint propsCount = roadBlockStorage[tokenId].propsCount;
+    uint lastPropIndex = roadBlockStorage[tokenId].lastPropIndex;
+    if (propsCount > 0 && roadBlockStorage[tokenId].props[lastPropIndex].isBlock == isBlock) {
       revert('Already applied');
     }
-    uint currentTime = block.timestamp;
-    for (uint i = rBlockProps.length - 1; i >= roadBlockStorage[tokenId].startingIndex; i--) {
-      if (currentTime - rBlockProps[i].modifiedTime > MAX_DELTA_TIME) {
-        roadBlockStorage[tokenId].startingIndex = i;
+
+    uint oldestPropIndex = 0;
+    if (propsCount > 1) {
+      for (uint i = 1; i < propsCount; i++) {
+        if (roadBlockStorage[tokenId].props[i].modifiedTime < roadBlockStorage[tokenId].props[oldestPropIndex].modifiedTime) {
+          oldestPropIndex = i;
+        }
       }
+
     }
-    roadBlockStorage[tokenId].props.push(RoadBlockProps(currentTime, isBlock));
+    uint currentTime = block.timestamp;
+    if (currentTime - roadBlockStorage[tokenId].props[oldestPropIndex].modifiedTime > MAX_DELTA_TIME) {
+      roadBlockStorage[tokenId].props[oldestPropIndex].modifiedTime = currentTime;
+      roadBlockStorage[tokenId].props[oldestPropIndex].isBlock = isBlock;
+      roadBlockStorage[tokenId].lastPropIndex = oldestPropIndex;
+    } else {
+      propsCount++;
+      roadBlockStorage[tokenId].props[propsCount - 1].modifiedTime = currentTime;
+      roadBlockStorage[tokenId].props[propsCount - 1].isBlock = isBlock;
+    }
   }
 
   // TODO should consume cinergy to do this action
@@ -295,7 +308,7 @@ contract Shizo is ERC721 {
     hashed = abi.encodePacked('shizo:transit:', toString(staticPositions[msg.sender].lat), toString(staticPositions[msg.sender].lon));
     for (uint i = 0; i < steps.length; i++) {
       uint256 tokenId = steps[i].tokenId;
-      if (roadBlockStorage[tokenId].props.length > 0 && 
+      if (i > 0 && 
         roadBlockStorage[tokenId].props[roadBlockStorage[tokenId].props.length - 1].isBlock && 
         ownerOf(tokenId) != msg.sender) {
         // TODO use custom errors
@@ -311,9 +324,9 @@ contract Shizo is ERC721 {
     address signer = hashed.toEthSignedMessageHash().recover(signature);
     require(owner == signer, 'Invalid signature');
 
-    transits[msg.sender].stepsStartingIndex = transits[msg.sender].steps.length - 1;
-    for (uint i = transits[msg.sender].stepsStartingIndex; i < transits[msg.sender].stepsStartingIndex + steps.length; i++) {
-      transits[msg.sender].steps.push(steps[i]);
+    transits[msg.sender].stepsCount = steps.length;
+    for (uint i = 0; i < steps.length; i++) {
+      transits[msg.sender].steps[i] = steps[i];
     }
     
     transits[msg.sender].departureTime = block.timestamp;
@@ -322,13 +335,12 @@ contract Shizo is ERC721 {
 
   function getDistanceTraversed() public view returns (uint16) {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    TransitStorage memory transit = transits[msg.sender];
-    uint16 deltaTime = uint16(block.timestamp - transit.departureTime);
+    uint16 deltaTime = uint16(block.timestamp - transits[msg.sender].departureTime);
     require(deltaTime < MAX_DELTA_TIME, 'Invalid transit');
     uint8 speed;
-    if (transit.t == 0) {
+    if (transits[msg.sender].t == 0) {
       speed = WALK_SPEED;
-    } else if (transit.t == 1) {
+    } else if (transits[msg.sender].t == 1) {
       speed = RUN_SPEED;
     } else {
       speed = TAXI_SPEED;
@@ -336,21 +348,21 @@ contract Shizo is ERC721 {
 
     uint16 distance = deltaTime * speed;
     uint16 sumDistance = 0;
-    uint time = transit.departureTime;
-    for (uint i = transit.stepsStartingIndex; i < transit.stepsStartingIndex + transit.steps.length; i++) {
-      uint256 tokenId = transit.steps[i].tokenId;
+    uint time = transits[msg.sender].departureTime;
+    for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
+      uint256 tokenId = transits[msg.sender].steps[i].tokenId;
       for (uint j = roadBlockStorage[tokenId].props.length - 1; j >= roadBlockStorage[tokenId].startingIndex; j--) {
         if (roadBlockStorage[tokenId].props[j].modifiedTime < time && 
           (j == 0 || roadBlockStorage[tokenId].props[j - 1].modifiedTime >= time) && roadBlockStorage[tokenId].props[j].isBlock) {
           return sumDistance;
         }
       }
-      if (sumDistance + transit.steps[i].distance > distance) {
+      if (sumDistance + transits[msg.sender].steps[i].distance > distance) {
         break;
       }
 
-      sumDistance += transit.steps[i].distance;
-      time += transit.steps[i].distance / speed;
+      sumDistance += transits[msg.sender].steps[i].distance;
+      time += transits[msg.sender].steps[i].distance / speed;
     }
 
     return distance;
@@ -360,13 +372,13 @@ contract Shizo is ERC721 {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
     uint16 distance = getDistanceTraversed();
     uint16 totalDistance = 0;
-    TransitStep[] memory steps = transits[msg.sender].steps;
-    for(uint i = transits[msg.sender].stepsStartingIndex; i < transits[msg.sender].stepsStartingIndex + steps.length; i++) {
-      totalDistance += steps[i].distance;
+    uint stepsCount = transits[msg.sender].stepsCount;
+    for(uint i = 0; i < stepsCount; i++) {
+      totalDistance += transits[msg.sender].steps[i].distance;
     }
 
     require(distance >= totalDistance, 'Transit not finished yet');
-    staticPositions[msg.sender].lat = steps[steps.length - 1].lat;
-    staticPositions[msg.sender].lon = steps[steps.length - 1].lon;
+    staticPositions[msg.sender].lat = transits[msg.sender].steps[stepsCount - 1].lat;
+    staticPositions[msg.sender].lon = transits[msg.sender].steps[stepsCount - 1].lon;
   }
 }

@@ -41,7 +41,7 @@ maplibregl.setRTLTextPlugin(
 )
 
 async function getEntity(id: string | number): Promise<any> {
-  const { data } = await axios.get(`https://map.metagate.land/features/${id}/`)
+  const { data } = await axios.get(`https://map.metagate.land/features/${id}`)
   return {
     id,
     name: data.name,
@@ -110,7 +110,7 @@ export const Map = () => {
       return
     }
     const signedMessage = await signMessage(entity.id)
-    await axios.put(`https://map.metagate.land/features/${entity.id}/`, {
+    await axios.put(`https://map.metagate.land/features/${entity.id}`, {
       name: fields.name?.length > 0 ? fields.name : entity.name,
       description: fields.description?.length > 0 ? fields.description : entity.description,
       color: fields.color,

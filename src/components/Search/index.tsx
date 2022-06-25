@@ -38,7 +38,7 @@ const service = (query: string, lat: number, lng: number) => {
   if (query?.length < 3) {
     return new Promise(resolve => resolve([]))
   }
-  return axios.get(`https://map.metagate.land/search/?q=${query}&lat=${lat}&lng=${lng}`)
+  return axios.get(`https://map.metagate.land/search?q=${query}&lat=${lat}&lng=${lng}`)
 }
 
 type SearchProps = {

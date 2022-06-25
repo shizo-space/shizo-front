@@ -33,7 +33,7 @@ const useStyle = makeStyles({
 })
 
 const getFeatures = async (lands): Promise<any> => {
-  const { data } = await axios.post('https://map.metagate.land/features/list/', {
+  const { data } = await axios.post('https://map.metagate.land/features/list', {
     merge_ids: lands.map(l => l.token_id),
   })
   return data
