@@ -7,7 +7,7 @@ import useEvmWallet from '../adaptors/evm-wallet-adaptor/useEvmWallet'
 
 function getCnt(currentChain: SimpleChain) {
   const { chainId, chainName } = currentChain
-  return Contracts[chainId]?.[chainName]?.contracts['Metagate']
+  return Contracts[chainId]?.[chainName]?.contracts['Shizo']
 }
 
 function getReadContract(currentChain: SimpleChain, provider: ethers.providers.Provider): ethers.Contract {
@@ -22,6 +22,11 @@ function getWriteContract(currentChain: SimpleChain, signer: ethers.Signer): eth
 
 export async function mint(
   mergeId: string,
+  type: number,
+  rarity: number,
+  lat: number,
+  lon: number,
+  signature: string,
   address: string | null,
   currentChain: SimpleChain,
   signer: ethers.Signer,
@@ -31,7 +36,17 @@ export async function mint(
   }
   const contract = getWriteContract(currentChain, signer)
   const service = async function () {
-    await contract.mint(address, mergeId, { value: ethers.utils.parseEther('1') })
+    await contract.mint(
+      mergeId,
+      type,
+      rarity,
+      Math.floor(lat * 10 ** 6),
+      Math.floor(lon * 10 ** 6),
+      Buffer.from(signature),
+      {
+        value: ethers.utils.parseEther('0.001'),
+      },
+    )
   }
   return NodeWorker.async(service)
 }

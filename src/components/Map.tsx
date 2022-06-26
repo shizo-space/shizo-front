@@ -3,7 +3,6 @@ import { useParams, useHistory } from 'react-router-dom'
 
 import maplibregl, { LngLatLike, PointLike, Map as MapType } from 'maplibre-gl'
 import { useRequest } from 'ahooks'
-import { directionApi } from '../utils/request'
 import makeStyles from '@mui/styles/makeStyles'
 import axios from 'axios'
 import Search from './Search'
@@ -51,16 +50,12 @@ async function getEntity(id: string | number): Promise<any> {
     embeddedLink: data.embedded_link,
     externalLink: data.link_to_vr,
     lat: (data.left_top.lat + data.right_bottom.lat) / 2,
-    lon: (data.left_top.long + data.right_bottom.long) / 2,
+    lon: (data.left_top.lon + data.right_bottom.lon) / 2,
     leftTop: data.left_top,
     rightBottom: data.right_bottom,
     isBuilding: data.is_building,
     color: data.color,
   }
-}
-
-async function setLocation(mergeId: string): Promise<void> {
-  await directionApi.put(`/location/${mergeId}/`)
 }
 
 export const Map = () => {
@@ -286,7 +281,6 @@ export const Map = () => {
         colorize(mergeId)
         fetchEntity(mergeId, false, lngLat, null, true)
         history.push(`/${mergeId}`)
-        setLocation(mergeId)
       })
     })
   }, [mapRef])

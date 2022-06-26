@@ -151,7 +151,7 @@ export const evmChains: Array<SimpleChain> = [
     // tokenBridgeAddress: '0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE',
     // wChainId: 5,
     chainId: 31337,
-    chainName: 'Localhost',
+    chainName: 'localhost',
     // fullChainName: 'Polygon Mumbai Testnet',
     rpcURL: 'http://localhost:8545',
     // currencySymbol: 'MATIC',

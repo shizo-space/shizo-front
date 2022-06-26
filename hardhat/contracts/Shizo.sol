@@ -151,7 +151,7 @@ contract Shizo is ERC721 {
   // TODO add padding to vars
   function mint(
     uint256 tokenId,
-    uint8 _type,
+    uint8 _type, // 0: Land, 1: Road
     uint8 rarity,
     int32 lat,
     int32 lon,
@@ -160,21 +160,22 @@ contract Shizo is ERC721 {
     require(msg.value == PRICE, 'Price is not correct');
     require(!_exists(tokenId), 'token exists');
 
-    bytes memory hashed = abi.encode(
-      'shizo:mint:',
-      tokenId,
-      ',',
-      _type,
-      ',',
-      rarity,
-      ',',
-      lat,
-      ',',
-      lon
-    );
+    // TODO delete abi.encode .. use padding of strings
+    // bytes memory hashed = abi.encode(
+    //   'shizo:mint:',
+    //   tokenId,
+    //   ',',
+    //   _type,
+    //   ',',
+    //   rarity,
+    //   ',',
+    //   lat,
+    //   ',',
+    //   lon
+    // );
 
-    address signer = hashed.toEthSignedMessageHash().recover(signature);
-    require(owner == signer, 'Invalid signature');
+    // address signer = hashed.toEthSignedMessageHash().recover(signature);
+    // require(owner == signer, 'Invalid signature');
 
     _safeMint(msg.sender, tokenId);
     entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));

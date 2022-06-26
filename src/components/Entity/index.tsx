@@ -20,7 +20,7 @@ import ChangePriceModal from '../ChangePriceModal'
 import OpenExternalWebsiteDialog from '../OpenExternalWebsiteDialog'
 import { Paper } from '@mui/material'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
-import { mint, getOwnerOf, getMarketDetails, purchase } from '../../contract-clients/metagateContract.client'
+import { mint, getOwnerOf, getMarketDetails, purchase } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import { shortenAddress } from '../../utils'
@@ -96,7 +96,8 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
   const { activeWalletAddress, signer } = useEvmWallet()
   const block = useNewBlock()
   const { run: mintNft } = useRequest<void, [string]>(
-    mergeId => mint(mergeId, activeWalletAddress, currentChain, signer),
+    // TODO signature
+    mergeId => mint(mergeId, data.isBuilding ? 0 : 1, 0, data.lat, data.lon, '', activeWalletAddress, currentChain, signer),
     {
       manual: true,
     },

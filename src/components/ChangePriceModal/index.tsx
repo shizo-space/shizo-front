@@ -7,7 +7,7 @@ import { ReactComponent as Logo } from '../../assets/theta-logo-big.svg'
 import { ReactComponent as CloseIcon } from '../../assets/close-dark.svg'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import { useRequest } from 'ahooks'
-import { setPrice } from '../../contract-clients/metagateContract.client'
+import { setPrice } from '../../contract-clients/shizoContract.client'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
 const useStyle = makeStyles({
   root: {
