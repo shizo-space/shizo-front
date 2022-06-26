@@ -1,6 +1,6 @@
 import bscIcon from '../assets/bsc.png'
 import ethIcon from '../assets/eth.png'
-import polygonIcon from '../assets/polygon.png'
+import polygonIcon from '../assets/polygon.svg'
 import { ethers } from 'ethers'
 
 export const baseConfig = {
@@ -8,20 +8,20 @@ export const baseConfig = {
 }
 
 export const evmChains: Array<SimpleChain> = [
-  {
-    chainName: 'testnetTheta',
-    chainId: 365, //testnet
-    rpcURL: 'https://eth-rpc-api-testnet.thetatoken.org/rpc',
-    baseToken: {
-      name: 'Tetha Fuel',
-      symbol: 'TFUEL',
-      chainId: 365,
-      decimals: 18,
-      chainName: 'Tetha',
-      ethContract: ethers.constants.AddressZero,
-      logoURI: 'https://assets.coingecko.com/coins/images/8029/small/1_0YusgngOrriVg4ZYx4wOFQ.png?1553483622',
-    },
-  },
+  // {
+  //   chainName: 'testnetTheta',
+  //   chainId: 365, //testnet
+  //   rpcURL: 'https://eth-rpc-api-testnet.thetatoken.org/rpc',
+  //   baseToken: {
+  //     name: 'Tetha Fuel',
+  //     symbol: 'TFUEL',
+  //     chainId: 365,
+  //     decimals: 18,
+  //     chainName: 'Tetha',
+  //     ethContract: ethers.constants.AddressZero,
+  //     logoURI: 'https://assets.coingecko.com/coins/images/8029/small/1_0YusgngOrriVg4ZYx4wOFQ.png?1553483622',
+  //   },
+  // },
   // {
   //     tokenBridgeAddress: '0x3ee18B2214AFF97000D974cf647E7C347E8fa585',
   //     wChainId: 2,
@@ -99,6 +99,78 @@ export const evmChains: Array<SimpleChain> = [
   //         logoURI: polygonIcon,
   //     },
   // },
+  // {
+  //   tokenBridgeAddress: '0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE',
+  //   wChainId: 5,
+  //   chainId: 80001,
+  //   chainName: 'Polygon Mumbai',
+  //   fullChainName: 'Polygon Mumbai Testnet',
+  //   rpcURL: 'https://rpc-mumbai.maticvigil.com/',
+  //   currencySymbol: 'MATIC',
+  //   blockExplorer: 'https://polygonscan.com',
+  //   externalRpcURL: 'https://polygon-mainnet.g.alchemy.com/v2/rX2NW-TfXUgdctNEj2kRSv9lY2521Ks6',
+  //   logoURI: polygonIcon,
+  //   baseToken: {
+  //     solanaContract: 'Gz7VkD4MacbEB6yC5XD3HcumEiYx2EtDYYrfikGsvopG',
+  //     name: 'Matic',
+  //     symbol: 'MATIC',
+  //     chainId: 80001,
+  //     decimals: 18,
+  //     chainName: 'Polygon',
+  //     isSolanaNative: false,
+  //     ethContract: ethers.constants.AddressZero,
+  //     wrappedAddress: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+  //     logoURI: polygonIcon,
+  //   },
+  // },
+  // {
+  //   // tokenBridgeAddress: '0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE',
+  //   // wChainId: 5,
+  //   chainId: 80001,
+  //   chainName: 'Polygon Mumbai',
+  //   // fullChainName: 'Polygon Mumbai Testnet',
+  //   rpcURL: 'https://rpc-mumbai.maticvigil.com/',
+  //   // currencySymbol: 'MATIC',
+  //   // blockExplorer: 'https://polygonscan.com',
+  //   // externalRpcURL: 'https://polygon-mainnet.g.alchemy.com/v2/rX2NW-TfXUgdctNEj2kRSv9lY2521Ks6',
+  //   // logoURI: polygonIcon,
+  //   baseToken: {
+  //     solanaContract: 'Gz7VkD4MacbEB6yC5XD3HcumEiYx2EtDYYrfikGsvopG',
+  //     name: 'Matic',
+  //     symbol: 'MATIC',
+  //     chainId: 80001,
+  //     decimals: 18,
+  //     chainName: 'Polygon',
+  //     isSolanaNative: false,
+  //     ethContract: ethers.constants.AddressZero,
+  //     wrappedAddress: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+  //     logoURI: polygonIcon,
+  //   },
+  // },
+  {
+    // tokenBridgeAddress: '0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE',
+    // wChainId: 5,
+    chainId: 31337,
+    chainName: 'Localhost',
+    // fullChainName: 'Polygon Mumbai Testnet',
+    rpcURL: 'http://localhost:8545',
+    // currencySymbol: 'MATIC',
+    // blockExplorer: 'https://polygonscan.com',
+    // externalRpcURL: 'https://polygon-mainnet.g.alchemy.com/v2/rX2NW-TfXUgdctNEj2kRSv9lY2521Ks6',
+    // logoURI: polygonIcon,
+    baseToken: {
+      // solanaContract: 'Gz7VkD4MacbEB6yC5XD3HcumEiYx2EtDYYrfikGsvopG',
+      name: 'Matic',
+      symbol: 'MATIC',
+      chainId: 31337,
+      decimals: 18,
+      chainName: 'Polygon',
+      isSolanaNative: false,
+      ethContract: ethers.constants.AddressZero,
+      wrappedAddress: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+      logoURI: polygonIcon,
+    },
+  },
   // {
   //     tokenBridgeAddress: '0x0e082F06FF657D94310cB8cE8B0D9a04541d8052',
   //     wChainId: 6,

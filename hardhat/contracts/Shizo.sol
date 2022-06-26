@@ -309,7 +309,7 @@ contract Shizo is ERC721 {
     for (uint i = 0; i < steps.length; i++) {
       uint256 tokenId = steps[i].tokenId;
       if (i > 0 && 
-        roadBlockStorage[tokenId].props[roadBlockStorage[tokenId].props.length - 1].isBlock && 
+        roadBlockStorage[tokenId].props[roadBlockStorage[tokenId].propsCount - 1].isBlock && 
         ownerOf(tokenId) != msg.sender) {
         // TODO use custom errors
         revert RoadBlocked(steps[i].tokenId);
@@ -351,12 +351,12 @@ contract Shizo is ERC721 {
     uint time = transits[msg.sender].departureTime;
     for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
       uint256 tokenId = transits[msg.sender].steps[i].tokenId;
-      for (uint j = roadBlockStorage[tokenId].props.length - 1; j >= roadBlockStorage[tokenId].startingIndex; j--) {
-        if (roadBlockStorage[tokenId].props[j].modifiedTime < time && 
-          (j == 0 || roadBlockStorage[tokenId].props[j - 1].modifiedTime >= time) && roadBlockStorage[tokenId].props[j].isBlock) {
-          return sumDistance;
-        }
-      }
+      // for (uint j = roadBlockStorage[tokenId].propsCount - 1; j >= roadBlockStorage[tokenId].startingIndex; j--) {
+      //   if (roadBlockStorage[tokenId].props[j].modifiedTime < time && 
+      //     (j == 0 || roadBlockStorage[tokenId].props[j - 1].modifiedTime >= time) && roadBlockStorage[tokenId].props[j].isBlock) {
+      //     return sumDistance;
+      //   }
+      // }
       if (sumDistance + transits[msg.sender].steps[i].distance > distance) {
         break;
       }

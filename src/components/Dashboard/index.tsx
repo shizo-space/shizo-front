@@ -81,7 +81,7 @@ const Dashboard: FC = ({}) => {
     }
 
     if (!walletAddress && !balanceText) {
-      return 'Connect to Tetha (Testnet)'
+      return 'Connect'
     }
 
     if (walletAddress && !balanceText) {
