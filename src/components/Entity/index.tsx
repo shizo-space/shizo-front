@@ -4,6 +4,7 @@ import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
+import { CustomIconButton } from '../../custom-mui-components/index'
 import SvgIcon from '@mui/material/SvgIcon'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
@@ -15,12 +16,21 @@ import { ReactComponent as Visible } from '../../assets/views-dark.svg'
 import { ReactComponent as User } from '../../assets/owner-dark.svg'
 import { ReactComponent as Note } from '../../assets/note-dark.svg'
 import { ReactComponent as Tfuel } from '../../assets/tfuel.svg'
+import { ReactComponent as TeleportIcon } from '../../assets/teleport.svg'
 import History from '../History'
 import ChangePriceModal from '../ChangePriceModal'
 import OpenExternalWebsiteDialog from '../OpenExternalWebsiteDialog'
 import { Paper } from '@mui/material'
+import { useTheme } from '@mui/styles'
+
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
-import { mint, getOwnerOf, getMarketDetails, purchase } from '../../contract-clients/shizoContract.client'
+import {
+  mint,
+  getOwnerOf,
+  getMarketDetails,
+  purchase,
+  teleport,
+} from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import { shortenAddress } from '../../utils'
@@ -81,6 +91,8 @@ type EntityProps = {
 
 const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
   const classes = useStyle()
+  const theme = useTheme()
+
   const { defaultPrice } = baseConfig
   const [showTooltip, setShowTooltip] = useState<boolean>(false)
   const [showChart, setShowChart] = useState<boolean>(false)
@@ -97,7 +109,18 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
   const block = useNewBlock()
   const { run: mintNft } = useRequest<void, [string]>(
     // TODO signature
-    mergeId => mint(mergeId, data.isBuilding ? 0 : 1, 0, data.lat, data.lon, '', activeWalletAddress, currentChain, signer),
+    mergeId =>
+      mint(
+        mergeId,
+        data.isBuilding ? 0 : 1,
+        0,
+        data.lat,
+        data.lon,
+        '',
+        activeWalletAddress,
+        currentChain,
+        signer,
+      ),
     {
       manual: true,
     },
@@ -105,6 +128,13 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
 
   const { run: buy } = useRequest<void, [string]>(
     mergeId => purchase(mergeId, originalPrice, currentChain, signer),
+    {
+      manual: true,
+    },
+  )
+
+  const { run: teleportToLand } = useRequest<void, [string]>(
+    mergeId => teleport(mergeId, currentChain, signer),
     {
       manual: true,
     },
@@ -315,7 +345,7 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
                       {` ${currentChain.baseToken.symbol}`}
                     </Typography>
                   </Box>
-                  {isOwnerOfEntity && (
+                  {/* {isOwnerOfEntity && (
                     <Button
                       variant="text"
                       sx={{ color: '#6BDCC6', fontWeight: 500, fontSize: 16, lineHeight: '14px' }}
@@ -325,6 +355,12 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
                     >
                       {!forSale ? '(Set Price)' : '(Change Price)'}
                     </Button>
+                  )} */}
+
+                  {isOwnerOfEntity && (
+                    <CustomIconButton size="medium" onClick={() => teleportToLand(data.id)} color="secondary">
+                      <SvgIcon component={TeleportIcon} viewBox="0 0 24 24" />
+                    </CustomIconButton>
                   )}
                 </Box>
               )}

@@ -83,6 +83,26 @@ export async function getMarketDetails(
   return NodeWorker.async(service)
 }
 
+export async function getStaticPosition(
+  address: string,
+  currentChain: SimpleChain,
+  provider: ethers.providers.Provider,
+): Promise<any> {
+  if (!address || !currentChain || !provider) {
+    return
+  }
+
+  const contract = getReadContract(currentChain, provider)
+  const service = async function () {
+    const pos = await contract.staticPositions(address)
+    return {
+      lat: pos.lat / 10 ** 6,
+      lon: pos.lon / 10 ** 6,
+    }
+  }
+  return NodeWorker.async(service)
+}
+
 export async function setPrice(
   mergeId: string,
   price: string,
@@ -111,6 +131,21 @@ export async function purchase(
   const contract = getWriteContract(currentChain, signer)
   const service = async function () {
     await contract.purchase(mergeId, { value: price })
+  }
+  return NodeWorker.async(service)
+}
+
+export async function teleport(
+  mergeId: string,
+  currentChain: SimpleChain,
+  signer: ethers.Signer,
+): Promise<void> {
+  if (!signer || !currentChain) {
+    return
+  }
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    await contract.teleport(mergeId)
   }
   return NodeWorker.async(service)
 }

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useHistory } from 'react-router-dom'
 
-import maplibregl, { LngLatLike, PointLike, Map as MapType } from 'maplibre-gl'
+import maplibregl, {
+  LngLatLike,
+  PointLike,
+  Map as MapType,
+  GeoJSONSource,
+  SymbolLayer,
+  BackgroundLayer,
+} from 'maplibre-gl'
 import { useRequest } from 'ahooks'
 import makeStyles from '@mui/styles/makeStyles'
 import axios from 'axios'
@@ -11,7 +18,9 @@ import Entity from './Entity'
 import useEvmWallet from '../adaptors/evm-wallet-adaptor/useEvmWallet'
 import Dashboard from './Dashboard'
 import EditEntity from './EditEntity'
+import { getStaticPosition } from '../contract-clients/shizoContract.client'
 import { youtubeParser, thetaParser } from '../utils'
+import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 // import MapboxInspect from 'mapbox-gl-inspect'
 
 const useStyle = makeStyles({
@@ -62,6 +71,8 @@ export const Map = () => {
   const classes = useStyle()
   const params = useParams()
   const history = useHistory()
+  const { defaultProvider: provider, currentChain } = useEvmProvider()
+  const { activeWalletAddress, isWalletConnectedToSite } = useEvmWallet()
   const [name, setName] = useState('')
   const [editingLand, setEditingLand] = useState<any>(null)
   const [mergeId, setMergeId] = useState('')
@@ -82,6 +93,42 @@ export const Map = () => {
     pitch: 0,
     bearing: 0,
   })
+
+  const { data: staticPosition } = useRequest<any, [void]>(
+    () => getStaticPosition(activeWalletAddress, currentChain, provider),
+    {
+      pollingInterval: 2000,
+      onSuccess: pos => {
+        console.log(pos)
+        const source = mapRef.getSource('avatar') as GeoJSONSource
+        if (!source) {
+          console.error('map source is undefined')
+          return
+        }
+        mapRef.setLayoutProperty('avatars', 'visibility', 'visible')
+        const data = {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [pos.lon, pos.lat],
+              },
+              properties: {
+                avatar: 'cat',
+              },
+            },
+          ],
+        }
+        source.setData(data)
+        console.log('done')
+      },
+      onError: err => {
+        console.error(err)
+      },
+    },
+  )
 
   const { signMessage } = useEvmWallet()
 
@@ -171,6 +218,41 @@ export const Map = () => {
     })
 
     map.on('load', () => {
+      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/cat.png', (error, image) => {
+        if (error) throw error
+
+        map.addImage('cat', image)
+        map.addSource('avatar', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [0, 0],
+                },
+                properties: {
+                  avatar: 'cat',
+                },
+              },
+            ],
+          },
+        })
+
+        map.addLayer({
+          id: 'avatars',
+          type: 'symbol',
+          source: 'avatar',
+          layout: {
+            visibility: 'none',
+            'icon-image': ['get', 'avatar'], // reference the image
+            'icon-size': 0.25,
+          },
+        })
+      })
+
       map.addLayer({
         id: 'road_highlight',
         type: 'line',

@@ -81,7 +81,7 @@ contract Shizo is ERC721 {
   mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
-  mapping(address => Position) private staticPositions;
+  mapping(address => Position) public staticPositions;
   mapping(address => TransitStorage) public transits;
 
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
@@ -179,9 +179,7 @@ contract Shizo is ERC721 {
 
     _safeMint(msg.sender, tokenId);
     entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
-    if (_type == 0) { // isLand
-      teleportsProps[tokenId] = TeleportProps(300, 0);
-    }
+    teleportsProps[tokenId] = TeleportProps(300, 0);
 
     TokenOnMarketplace memory tmp;
     tmp.listing = false;
@@ -255,13 +253,13 @@ contract Shizo is ERC721 {
     require(entities[tokenId].t == 0, 'You can only teleport to lands');
     require(
       teleportsProps[tokenId].cooldown + teleportsProps[tokenId].lastTeleportTime < block.timestamp,
-      string(abi.encodePacked('You must wait ',
-        block.timestamp - (teleportsProps[tokenId].cooldown + teleportsProps[tokenId].lastTeleportTime),
-        ' seconds before you can teleport again to this property')
-      )
+      'You must wait before doing another teleport'
     );
+    console.log(teleportsProps[tokenId].cooldown);
+    console.log(teleportsProps[tokenId].lastTeleportTime);
+    console.log(block.timestamp);
 
-    staticPositions[ownerOf(tokenId)] = entities[tokenId].pos;
+    staticPositions[msg.sender] = entities[tokenId].pos;
     teleportsProps[tokenId].lastTeleportTime = block.timestamp;
   }
 
