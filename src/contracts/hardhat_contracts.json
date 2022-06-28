@@ -2976,7 +2976,7 @@
           ]
         },
         "Shizo": {
-          "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
           "abi": [
             {
               "inputs": [
@@ -3358,9 +3358,44 @@
               "name": "getDistanceTraversed",
               "outputs": [
                 {
-                  "internalType": "uint16",
+                  "internalType": "uint32",
                   "name": "",
-                  "type": "uint16"
+                  "type": "uint32"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "getTransitSteps",
+              "outputs": [
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "distance",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "int32",
+                      "name": "lat",
+                      "type": "int32"
+                    },
+                    {
+                      "internalType": "int32",
+                      "name": "lon",
+                      "type": "int32"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "tokenId",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct Shizo.TransitStep[]",
+                  "name": "",
+                  "type": "tuple[]"
                 }
               ],
               "stateMutability": "view",

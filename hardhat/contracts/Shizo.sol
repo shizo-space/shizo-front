@@ -21,9 +21,9 @@ contract Shizo is ERC721 {
 
   uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
   uint256 public constant ROYALITY = 5; // 5%
-  uint8 public constant WALK_SPEED = 5;
-  uint8 public constant RUN_SPEED = 10;
-  uint8 public constant TAXI_SPEED = 16;
+  uint8 public constant WALK_SPEED = 1;
+  uint8 public constant RUN_SPEED = 5;
+  uint8 public constant TAXI_SPEED = 10;
 
   uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
 
@@ -75,7 +75,7 @@ contract Shizo is ERC721 {
   struct RoadBlockStorage {
     uint propsCount;
     uint lastPropIndex;
-    mapping(uint => RoadBlockProps) props;
+    mapping(uint => RoadBlockProps) props; // TODO ouside of the struct
   }
 
   mapping(uint256 => TeleportProps) public teleportsProps;
@@ -255,9 +255,6 @@ contract Shizo is ERC721 {
       teleportsProps[tokenId].cooldown + teleportsProps[tokenId].lastTeleportTime < block.timestamp,
       'You must wait before doing another teleport'
     );
-    console.log(teleportsProps[tokenId].cooldown);
-    console.log(teleportsProps[tokenId].lastTeleportTime);
-    console.log(block.timestamp);
 
     staticPositions[msg.sender] = entities[tokenId].pos;
     teleportsProps[tokenId].lastTeleportTime = block.timestamp;
@@ -303,11 +300,11 @@ contract Shizo is ERC721 {
     require(staticPositions[msg.sender].lon == steps[0].lon, "Transit: Invalid starting position");
     require(_type == 0 || _type == 1, 'Transit: Type is not valid');
 
-    bytes memory hashed;
-    hashed = abi.encodePacked('shizo:transit:', toString(staticPositions[msg.sender].lat), toString(staticPositions[msg.sender].lon));
+    // bytes memory hashed;
+    // hashed = abi.encodePacked('shizo:transit:', toString(staticPositions[msg.sender].lat), toString(staticPositions[msg.sender].lon));
     for (uint i = 0; i < steps.length; i++) {
       uint256 tokenId = steps[i].tokenId;
-      if (i > 0 && 
+      if (i > 0 && roadBlockStorage[tokenId].propsCount > 0 &&
         roadBlockStorage[tokenId].props[roadBlockStorage[tokenId].propsCount - 1].isBlock && 
         ownerOf(tokenId) != msg.sender) {
         // TODO use custom errors
@@ -315,26 +312,27 @@ contract Shizo is ERC721 {
       }
 
       if (i == 0) {
-        hashed = abi.encodePacked(string(hashed), tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', steps[i].distance.toString());
+        // hashed = abi.encodePacked(string(hashed), tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', steps[i].distance.toString());
       } else {
-        hashed = abi.encodePacked(string(hashed), ',', tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', steps[i].distance.toString());
+        // hashed = abi.encodePacked(string(hashed), ',', tokenId.toString(), ',', toString(steps[i].lat), ',', toString(steps[i].lon), ',', steps[i].distance.toString());
       }
     }
-    address signer = hashed.toEthSignedMessageHash().recover(signature);
-    require(owner == signer, 'Invalid signature');
+    // address signer = hashed.toEthSignedMessageHash().recover(signature);
+    // require(owner == signer, 'Invalid signature');
 
     transits[msg.sender].stepsCount = steps.length;
     for (uint i = 0; i < steps.length; i++) {
-      transits[msg.sender].steps[i] = steps[i];
+      TransitStorage storage myTransit = transits[msg.sender];
+      myTransit.steps[i] = TransitStep(steps[i].distance, steps[i].lat, steps[i].lon, steps[i].tokenId);
     }
     
     transits[msg.sender].departureTime = block.timestamp;
     transits[msg.sender].t = _type;
   }
 
-  function getDistanceTraversed() public view returns (uint16) {
+  function getDistanceTraversed() public view returns (uint32) {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    uint16 deltaTime = uint16(block.timestamp - transits[msg.sender].departureTime);
+    uint32 deltaTime = uint32(block.timestamp - transits[msg.sender].departureTime);
     require(deltaTime < MAX_DELTA_TIME, 'Invalid transit');
     uint8 speed;
     if (transits[msg.sender].t == 0) {
@@ -345,8 +343,8 @@ contract Shizo is ERC721 {
       speed = TAXI_SPEED;
     }
 
-    uint16 distance = deltaTime * speed;
-    uint16 sumDistance = 0;
+    uint32 distance = deltaTime * speed;
+    uint32 sumDistance = 0;
     uint time = transits[msg.sender].departureTime;
     for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
       uint256 tokenId = transits[msg.sender].steps[i].tokenId;
@@ -369,8 +367,8 @@ contract Shizo is ERC721 {
 
   function finishTransit() external {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    uint16 distance = getDistanceTraversed();
-    uint16 totalDistance = 0;
+    uint32 distance = getDistanceTraversed();
+    uint32 totalDistance = 0;
     uint stepsCount = transits[msg.sender].stepsCount;
     for(uint i = 0; i < stepsCount; i++) {
       totalDistance += transits[msg.sender].steps[i].distance;
@@ -379,5 +377,15 @@ contract Shizo is ERC721 {
     require(distance >= totalDistance, 'Transit not finished yet');
     staticPositions[msg.sender].lat = transits[msg.sender].steps[stepsCount - 1].lat;
     staticPositions[msg.sender].lon = transits[msg.sender].steps[stepsCount - 1].lon;
+  }
+
+
+  function getTransitSteps() public view returns(TransitStep[] memory) {
+    TransitStep[] memory steps = new TransitStep[](transits[msg.sender].stepsCount);
+    for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
+      steps[i] = (transits[msg.sender].steps[i]);
+    }
+
+    return steps;
   }
 }

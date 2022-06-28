@@ -18,9 +18,16 @@ import Entity from './Entity'
 import useEvmWallet from '../adaptors/evm-wallet-adaptor/useEvmWallet'
 import Dashboard from './Dashboard'
 import EditEntity from './EditEntity'
-import { getStaticPosition } from '../contract-clients/shizoContract.client'
-import { youtubeParser, thetaParser } from '../utils'
+import {
+  getDistanceTraversed,
+  getStaticPosition,
+  getTransit,
+  getTransitSteps,
+} from '../contract-clients/shizoContract.client'
+import { youtubeParser, thetaParser, haversineDistance } from '../utils'
 import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
+import polyline from '@mapbox/polyline'
+import { directionApi } from '../utils/request'
 // import MapboxInspect from 'mapbox-gl-inspect'
 
 const useStyle = makeStyles({
@@ -67,6 +74,60 @@ async function getEntity(id: string | number): Promise<any> {
   }
 }
 
+function getDynamicPosition(distance: number, steps: TransitStep[], pline: string): Position {
+  const coords = polyline.decode(pline, 6)
+  console.log(coords.map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)]))
+  let currentDistance = 0
+  for (let i = 0; i < steps.length; i++) {
+    if (distance > steps[i].distance + currentDistance) {
+      currentDistance += steps[i].distance
+      console.log('>>>>>>>>>>>>>>>>>>>')
+      console.log(i)
+      console.log(currentDistance)
+      console.log(distance)
+    } else {
+      console.log('#################')
+      console.log(i)
+      const amountOfLastStepTraversed = distance - currentDistance
+      const startingIndex = coords
+        .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
+        .findIndex(([lat, lon]) => lat === steps[i].lat && lon === steps[i].lon)
+      console.log(startingIndex)
+      console.log(steps[i].lat)
+      console.log(steps[i].lon)
+
+      if (startingIndex === -1) {
+        return {
+          lat: steps[i].lat / 10 ** 6,
+          lon: steps[i].lon / 10 ** 6,
+        }
+      }
+      const lastStepCoords = coords.splice(startingIndex)
+      console.log(lastStepCoords)
+      let sumDist = 0
+      if (lastStepCoords.length === 1) {
+        return {
+          lat: lastStepCoords[0][0],
+          lon: lastStepCoords[0][1],
+        }
+      }
+      for (let j = 0; j < lastStepCoords.length - 1; j++) {
+        const dist = haversineDistance(lastStepCoords[j + 1], lastStepCoords[j])
+        if (amountOfLastStepTraversed > dist + sumDist) {
+          sumDist += dist
+        } else {
+          const traversed = amountOfLastStepTraversed - sumDist
+          const portion = traversed / dist
+          return {
+            lat: lastStepCoords[j][0] + (lastStepCoords[j + 1][0] - lastStepCoords[j][0]) * portion,
+            lon: lastStepCoords[j][1] + (lastStepCoords[j + 1][1] - lastStepCoords[j][1]) * portion,
+          }
+        }
+      }
+    }
+  }
+}
+
 export const Map = () => {
   const classes = useStyle()
   const params = useParams()
@@ -94,43 +155,94 @@ export const Map = () => {
     bearing: 0,
   })
 
+  const { run: getActiveTransit } = useRequest<any, [void]>(
+    () => getTransit(activeWalletAddress, currentChain, provider),
+    { manual: true },
+  )
+
   const { data: staticPosition } = useRequest<any, [void]>(
     () => getStaticPosition(activeWalletAddress, currentChain, provider),
     {
-      pollingInterval: 2000,
-      onSuccess: pos => {
-        console.log(pos)
-        const source = mapRef.getSource('avatar') as GeoJSONSource
-        if (!source) {
-          console.error('map source is undefined')
-          return
-        }
-        mapRef.setLayoutProperty('avatars', 'visibility', 'visible')
-        const data = {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [pos.lon, pos.lat],
-              },
-              properties: {
-                avatar: 'cat',
-              },
-            },
-          ],
-        }
-        source.setData(data)
-        console.log('done')
-      },
-      onError: err => {
-        console.error(err)
-      },
+      manual: true,
     },
   )
 
-  const { signMessage } = useEvmWallet()
+  const getPosition = async () => {
+    let pos = null
+    const transit = await getTransit(activeWalletAddress, currentChain, provider)
+    console.log(`transit: ${transit}`)
+    if (!transit || transit.departureTime == 0) {
+      console.log('transit not found')
+      pos = await getStaticPosition(activeWalletAddress, currentChain, provider)
+    } else {
+      console.log(transit)
+      const steps = await getTransitSteps(currentChain, signer)
+      console.log('steps: ', steps)
+
+      const deltaTime = new Date().getTime() / 1000 - transit.departureTime
+      const distance = deltaTime * 5
+      console.log(`deltaTime: ${deltaTime}`)
+      console.log(`distance: ${distance}`)
+
+      let ride = null
+      try {
+        const { data } = await directionApi.get('/ride', {
+          params: {
+            walletAddress: activeWalletAddress,
+          },
+        })
+        ride = data
+      } catch (e) {
+        console.error(e)
+        console.error('ride not found!')
+      }
+
+      if (!ride) {
+        pos = await getStaticPosition(activeWalletAddress, currentChain, provider)
+      } else {
+        console.log('ride found!')
+        pos = getDynamicPosition(distance, steps, ride.polyline_path)
+        console.log(`dynamic pos: ${JSON.stringify(pos)}`)
+      }
+    }
+
+    if (!pos) {
+      console.log('pos is undefined')
+      return
+    }
+    const source = mapRef.getSource('avatar') as GeoJSONSource
+    if (!source) {
+      console.error('map source is undefined')
+      return
+    }
+    mapRef.setLayoutProperty('avatars', 'visibility', 'visible')
+    const data = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [pos.lon, pos.lat],
+          },
+          properties: {
+            avatar: 'cat',
+          },
+        },
+      ],
+    }
+    source.setData(data)
+    return pos
+  }
+
+  const { data: position } = useRequest<any, [void]>(() => getPosition(), {
+    pollingInterval: 1000,
+    onSuccess: transit => {
+      console.log(transit)
+    },
+  })
+
+  const { signMessage, signer } = useEvmWallet()
 
   const colorize = useCallback(
     async mergeId => {
@@ -251,6 +363,32 @@ export const Map = () => {
             'icon-size': 0.25,
           },
         })
+      })
+
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [],
+          },
+        },
+      })
+
+      map.addLayer({
+        id: 'route',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#888',
+          'line-width': 8,
+        },
       })
 
       map.addLayer({
@@ -414,6 +552,21 @@ export const Map = () => {
     setEditingLand(data)
   }
 
+  const showRoute = pline => {
+    console.log(pline)
+    const coords = polyline.decode(pline, 6)
+    console.log(coords)
+    const source = mapRef.getSource('route') as GeoJSONSource
+    source.setData({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: coords.map(([lat, lon]) => [lon, lat]),
+      },
+    })
+  }
+
   const handleCancelEdit = () => {
     //
   }
@@ -478,8 +631,10 @@ export const Map = () => {
               <Entity
                 data={entity}
                 loading={fetchEntityLoading}
+                userPosition={position}
                 onFocus={() => focusOnLand(entity, true)}
                 onEdit={data => handleClickEdit(data)}
+                onRoute={polyline => showRoute(polyline)}
               />
             )}
           </>

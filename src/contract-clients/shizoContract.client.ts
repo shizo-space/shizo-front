@@ -103,6 +103,37 @@ export async function getStaticPosition(
   return NodeWorker.async(service)
 }
 
+export async function getTransit(
+  address: string,
+  currentChain: SimpleChain,
+  provider: ethers.providers.Provider,
+): Promise<any> {
+  if (!address || !currentChain || !provider) {
+    return
+  }
+
+  const contract = getReadContract(currentChain, provider)
+  const service = async function () {
+    const transit = await contract.transits(address)
+    console.log('steps')
+    console.log(transit.steps)
+    return transit
+  }
+  return NodeWorker.async(service)
+}
+
+export async function getDistanceTraversed(currentChain: SimpleChain, signer: ethers.Signer): Promise<any> {
+  if (!currentChain || !signer) {
+    return
+  }
+
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    return await contract.getDistanceTraversed()
+  }
+  return NodeWorker.async(service)
+}
+
 export async function setPrice(
   mergeId: string,
   price: string,
@@ -146,6 +177,35 @@ export async function teleport(
   const contract = getWriteContract(currentChain, signer)
   const service = async function () {
     await contract.teleport(mergeId)
+  }
+  return NodeWorker.async(service)
+}
+
+export async function startTransit(
+  transitType: number,
+  steps: any[],
+  currentChain: SimpleChain,
+  signer: ethers.Signer,
+): Promise<void> {
+  console.log(transitType, steps, currentChain, signer)
+  if (!signer || !currentChain || !steps || transitType == null) {
+    return
+  }
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    await contract.startTransit(transitType, steps, Buffer.from('hfjiksh'))
+  }
+  return NodeWorker.async(service)
+}
+
+export async function getTransitSteps(currentChain: SimpleChain, signer: ethers.Signer): Promise<any> {
+  if (!currentChain || !signer) {
+    return
+  }
+
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    return await contract.getTransitSteps()
   }
   return NodeWorker.async(service)
 }

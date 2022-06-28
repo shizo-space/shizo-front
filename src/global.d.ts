@@ -70,3 +70,15 @@ type EvmProviderContext = {
   switchEvmChainError: any
   // tokens: Token[]
 }
+
+type Position = {
+  lat: number
+  lon: number
+}
+
+type TransitStep = {
+  tokenId: number
+  lat: number // 10 ** 6
+  lon: number // 10 ** 6
+  distance: number
+}

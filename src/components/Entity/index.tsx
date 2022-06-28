@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 import makeStyles from '@mui/styles/makeStyles'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
@@ -17,11 +17,13 @@ import { ReactComponent as User } from '../../assets/owner-dark.svg'
 import { ReactComponent as Note } from '../../assets/note-dark.svg'
 import { ReactComponent as Tfuel } from '../../assets/tfuel.svg'
 import { ReactComponent as TeleportIcon } from '../../assets/teleport.svg'
-import History from '../History'
+import { ReactComponent as NavigationIcon } from '../../assets/Navigation.svg'
+import { ReactComponent as PolygonIcon } from '../../assets/polygon.svg'
+
 import ChangePriceModal from '../ChangePriceModal'
 import OpenExternalWebsiteDialog from '../OpenExternalWebsiteDialog'
+import { directionApi } from '../../utils/request'
 import { Paper } from '@mui/material'
-import { useTheme } from '@mui/styles'
 
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
 import {
@@ -30,6 +32,7 @@ import {
   getMarketDetails,
   purchase,
   teleport,
+  startTransit,
 } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
@@ -39,6 +42,8 @@ import { BigNumber, ethers } from 'ethers'
 import useNewBlock from '../../adaptors/evm-provider-adaptor/hooks/useNewBlock'
 import { getMint, getPurchases } from '../../gql'
 import Chart from '../Chart'
+import axios from 'axios'
+import { parse } from 'path'
 
 const useStyle = makeStyles((theme: any) => ({
   root: {
@@ -85,13 +90,14 @@ const useStyle = makeStyles((theme: any) => ({
 type EntityProps = {
   data: any
   loading: boolean
+  userPosition: any
   onFocus: (data) => void
   onEdit: (data) => void
+  onRoute: (polyline) => void
 }
 
-const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
+const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit, onRoute }) => {
   const classes = useStyle()
-  const theme = useTheme()
 
   const { defaultPrice } = baseConfig
   const [showTooltip, setShowTooltip] = useState<boolean>(false)
@@ -100,6 +106,7 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
   const [showChangePriceModal, setShowChangePriceModal] = useState<boolean>(false)
   const [ownerAddress, setOwnerAddress] = useState<string | null>(null)
   const [originalPrice, setOriginalPrice] = useState<BigNumber | null>(null)
+  const [steps, setSteps] = useState<any>(null)
   const [purchases, setPurchases] = useState(null)
   const [mintData, setMintData] = useState(null)
   const [price, setPrice] = useState<string | null>(defaultPrice)
@@ -133,12 +140,49 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
     },
   )
 
+  const { run: transitBegin } = useRequest<void, [number]>(
+    transitType => startTransit(transitType, steps, currentChain, signer),
+    {
+      manual: true,
+    },
+  )
+
   const { run: teleportToLand } = useRequest<void, [string]>(
     mergeId => teleport(mergeId, currentChain, signer),
     {
       manual: true,
     },
   )
+
+  async function navigate() {
+    if (!data) {
+      console.error('entity is undefined')
+      return
+    }
+    console.log('HERE')
+    const res = await directionApi.get('/routes', {
+      params: {
+        srcLat: userPosition.lat,
+        srcLong: userPosition.lon,
+        dstLat: data.lat,
+        dstLong: data.lon,
+        vehicle: 'car',
+        searchMethod: 'fastest',
+        walletAddress: activeWalletAddress,
+      },
+    })
+    console.log(res)
+    onRoute(res.data.polyline_path)
+    setSteps([
+      {
+        tokenId: parseInt(data.id),
+        lat: Math.floor(userPosition.lat * 10 ** 6),
+        lon: Math.floor(userPosition.lon * 10 ** 6),
+        distance: 0,
+      },
+      ...res.data.route.steps,
+    ])
+  }
 
   const { loading: ownerAddressLoading } = useRequest<string, [string]>(
     () => getOwnerOf(data?.id, currentChain, provider),
@@ -356,12 +400,17 @@ const Entity: FC<EntityProps> = ({ data, loading, onFocus, onEdit }) => {
                       {!forSale ? '(Set Price)' : '(Change Price)'}
                     </Button>
                   )} */}
-
                   {isOwnerOfEntity && (
                     <CustomIconButton size="medium" onClick={() => teleportToLand(data.id)} color="secondary">
                       <SvgIcon component={TeleportIcon} viewBox="0 0 24 24" />
                     </CustomIconButton>
                   )}
+                  <CustomIconButton size="medium" onClick={() => navigate()} color="secondary">
+                    <SvgIcon component={NavigationIcon} viewBox="0 0 24 24" />
+                  </CustomIconButton>
+                  <CustomIconButton size="medium" onClick={() => transitBegin(0)} color="secondary">
+                    <SvgIcon component={PolygonIcon} viewBox="0 0 24 24" />
+                  </CustomIconButton>
                 </Box>
               )}
 
