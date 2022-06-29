@@ -385,6 +385,7 @@ contract Shizo is ERC721 {
     staticPositions[msg.sender].lon = transits[msg.sender].steps[stepsCount - 1].lon;
     transits[msg.sender].departureTime = 0;
     transits[msg.sender].stepsCount = 0;
+    console.log("done");
   }
 
 

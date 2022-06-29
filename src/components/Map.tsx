@@ -24,7 +24,7 @@ import {
   getTransit,
   getTransitSteps,
 } from '../contract-clients/shizoContract.client'
-import { youtubeParser, thetaParser, haversineDistance } from '../utils'
+import { youtubeParser, thetaParser, haversineDistance, calcPolyDistance } from '../utils'
 import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import polyline from '@mapbox/polyline'
 import { directionApi } from '../utils/request'
@@ -74,44 +74,106 @@ async function getEntity(id: string | number): Promise<any> {
   }
 }
 
+function getDynamicPositionV2(distance: number, coords: any[]): Position {
+  // const startingIndex = coords
+  //   .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
+  //   .findIndex(([lat, lon]) => lat == steps[i - 1].lat && lon == steps[i - 1].lon)
+
+  // if (startingIndex === -1) {
+  //   console.log('>>>>> Starting index is -1')
+  //   console.log(steps[i - 1].lat, steps[i - 1].lon)
+
+  //   return {
+  //     lat: steps[i - 1].lat / 10 ** 6,
+  //     lon: steps[i - 1].lon / 10 ** 6,
+  //   }
+  // }
+
+  if (coords.length === 1) {
+    return {
+      lat: coords[0].lat,
+      lon: coords[0].lon,
+    }
+  }
+
+  let sumDist = 0
+  for (let j = 1; j < coords.length; j++) {
+    const lastEdgeDistance = haversineDistance(
+      [coords[j].lon, coords[j].lat],
+      [coords[j - 1].lon, coords[j - 1].lat],
+    )
+
+    console.log(`sum dist: ${sumDist}`)
+    if (distance > lastEdgeDistance + sumDist) {
+      sumDist += lastEdgeDistance
+      continue
+    }
+
+    const traversed = distance - sumDist
+    const portion = traversed / lastEdgeDistance
+    console.log(`Portion: ${portion}`)
+    return {
+      lat: coords[j - 1].lat + (coords[j].lat - coords[j - 1].lat) * portion,
+      lon: coords[j - 1].lon + (coords[j].lon - coords[j - 1].lon) * portion,
+    }
+  }
+
+  const lastIndex = coords.length - 1
+  return {
+    lat: coords[lastIndex].lat,
+    lon: coords[lastIndex].lon,
+  }
+}
+
 function getDynamicPosition(distance: number, steps: TransitStep[], pline: string): Position {
   const coords = polyline.decode(pline, 6)
   let currentDistance = 0
-  for (let i = 0; i < steps.length; i++) {
+  for (let i = 1; i < steps.length; i++) {
     if (distance > steps[i].distance + currentDistance) {
       currentDistance += steps[i].distance
-    } else {
-      const amountOfLastStepTraversed = distance - currentDistance
-      const startingIndex = coords
-        .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
-        .findIndex(([lat, lon]) => lat === steps[i].lat && lon === steps[i].lon)
+      continue
+    }
 
-      if (startingIndex === -1) {
-        return {
-          lat: steps[i].lat / 10 ** 6,
-          lon: steps[i].lon / 10 ** 6,
-        }
+    const amountOfLastStepTraversed = distance - currentDistance
+    const startingIndex = coords
+      .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
+      .findIndex(([lat, lon]) => lat == steps[i - 1].lat && lon == steps[i - 1].lon)
+
+    if (startingIndex === -1) {
+      console.log('>>>>> Starting index is -1')
+      console.log(steps[i - 1].lat, steps[i - 1].lon)
+
+      return {
+        lat: steps[i - 1].lat / 10 ** 6,
+        lon: steps[i - 1].lon / 10 ** 6,
       }
-      const lastStepCoords = coords.splice(startingIndex)
-      let sumDist = 0
-      if (lastStepCoords.length === 1) {
-        return {
-          lat: lastStepCoords[0][0],
-          lon: lastStepCoords[0][1],
-        }
+    }
+    const lastStepCoords = coords.splice(startingIndex)
+    if (lastStepCoords.length === 1) {
+      return {
+        lat: lastStepCoords[0][0],
+        lon: lastStepCoords[0][1],
       }
-      for (let j = 0; j < lastStepCoords.length - 1; j++) {
-        const dist = haversineDistance(lastStepCoords[j + 1], lastStepCoords[j])
-        if (amountOfLastStepTraversed > dist + sumDist) {
-          sumDist += dist
-        } else {
-          const traversed = amountOfLastStepTraversed - sumDist
-          const portion = traversed / dist
-          return {
-            lat: lastStepCoords[j][0] + (lastStepCoords[j + 1][0] - lastStepCoords[j][0]) * portion,
-            lon: lastStepCoords[j][1] + (lastStepCoords[j + 1][1] - lastStepCoords[j][1]) * portion,
-          }
-        }
+    }
+
+    let sumDist = 0
+    for (let j = 1; j < lastStepCoords.length; j++) {
+      const lastEdgeDistance = haversineDistance(
+        [lastStepCoords[j][1], lastStepCoords[j][0]],
+        [lastStepCoords[j - 1][1], lastStepCoords[j - 1][0]],
+      )
+
+      if (amountOfLastStepTraversed > lastEdgeDistance + sumDist) {
+        sumDist += lastEdgeDistance
+        continue
+      }
+
+      const traversed = amountOfLastStepTraversed - sumDist
+      const portion = traversed / lastEdgeDistance
+      console.log(`Portion: ${portion}`)
+      return {
+        lat: lastStepCoords[j - 1][0] + (lastStepCoords[j][0] - lastStepCoords[j - 1][0]) * portion,
+        lon: lastStepCoords[j - 1][1] + (lastStepCoords[j][1] - lastStepCoords[j - 1][1]) * portion,
       }
     }
   }
@@ -185,23 +247,25 @@ export const Map = () => {
       const [distance, _] = await getDistance()
       console.log(`distance: ${distance}`)
 
-      let polylinePath = null
+      let path = null
       try {
         const { data } = await directionApi.get('/ride', {
           params: {
             walletAddress: activeWalletAddress,
           },
         })
-        polylinePath = data?.polyline_path
+        path = data?.path
       } catch (e) {
         console.error(e)
         console.error('ride not found!')
       }
 
-      if (!polylinePath) {
+      if (!path) {
         pos = await getUserStaticPosition()
       } else {
-        pos = getDynamicPosition(distance, steps, polylinePath)
+        // pos = getDynamicPosition(distance, steps, polylinePath)
+        pos = getDynamicPositionV2(distance, path)
+
         console.log(`dynamic pos: ${JSON.stringify(pos)}`)
       }
     }
@@ -289,7 +353,6 @@ export const Map = () => {
       ...viewport,
     })
     map.getCanvas().style.cursor = 'default'
-
     setMapRef(map)
   }, [version])
 
