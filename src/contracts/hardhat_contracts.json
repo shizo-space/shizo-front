@@ -2976,7 +2976,7 @@
           ]
         },
         "Shizo": {
-          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+          "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
           "abi": [
             {
               "inputs": [
@@ -3251,6 +3251,13 @@
               "type": "function"
             },
             {
+              "inputs": [],
+              "name": "cancelTransit",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            },
+            {
               "inputs": [
                 {
                   "internalType": "uint256",
@@ -3354,20 +3361,37 @@
               "type": "function"
             },
             {
-              "inputs": [],
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "addrs",
+                  "type": "address"
+                }
+              ],
               "name": "getDistanceTraversed",
               "outputs": [
                 {
                   "internalType": "uint32",
                   "name": "",
                   "type": "uint32"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
                 }
               ],
               "stateMutability": "view",
               "type": "function"
             },
             {
-              "inputs": [],
+              "inputs": [
+                {
+                  "internalType": "address",
+                  "name": "addrs",
+                  "type": "address"
+                }
+              ],
               "name": "getTransitSteps",
               "outputs": [
                 {

@@ -107,6 +107,38 @@ export async function getTransit(
   address: string,
   currentChain: SimpleChain,
   provider: ethers.providers.Provider,
+): Promise<Transit> {
+  if (!address || !currentChain || !provider) {
+    return
+  }
+
+  const contract = getReadContract(currentChain, provider)
+  const service = async function () {
+    return await contract.transits(address)
+  }
+  return NodeWorker.async(service)
+}
+
+export async function getDistanceTraversed(
+  address: string,
+  currentChain: SimpleChain,
+  provider: ethers.providers.Provider,
+): Promise<[number, number]> {
+  if (!address || !currentChain || !provider) {
+    return
+  }
+
+  const contract = getReadContract(currentChain, provider)
+  const service = async function () {
+    return await contract.getDistanceTraversed(address)
+  }
+  return NodeWorker.async(service)
+}
+
+export async function getTransitSteps(
+  address: string,
+  currentChain: SimpleChain,
+  provider: ethers.providers.Provider,
 ): Promise<any> {
   if (!address || !currentChain || !provider) {
     return
@@ -114,22 +146,7 @@ export async function getTransit(
 
   const contract = getReadContract(currentChain, provider)
   const service = async function () {
-    const transit = await contract.transits(address)
-    console.log('steps')
-    console.log(transit.steps)
-    return transit
-  }
-  return NodeWorker.async(service)
-}
-
-export async function getDistanceTraversed(currentChain: SimpleChain, signer: ethers.Signer): Promise<any> {
-  if (!currentChain || !signer) {
-    return
-  }
-
-  const contract = getWriteContract(currentChain, signer)
-  const service = async function () {
-    return await contract.getDistanceTraversed()
+    return await contract.getTransitSteps(address)
   }
   return NodeWorker.async(service)
 }
@@ -187,7 +204,6 @@ export async function startTransit(
   currentChain: SimpleChain,
   signer: ethers.Signer,
 ): Promise<void> {
-  console.log(transitType, steps, currentChain, signer)
   if (!signer || !currentChain || !steps || transitType == null) {
     return
   }
@@ -198,14 +214,24 @@ export async function startTransit(
   return NodeWorker.async(service)
 }
 
-export async function getTransitSteps(currentChain: SimpleChain, signer: ethers.Signer): Promise<any> {
-  if (!currentChain || !signer) {
+export async function cancelTransit(currentChain: SimpleChain, signer: ethers.Signer): Promise<void> {
+  if (!signer || !currentChain) {
     return
   }
-
   const contract = getWriteContract(currentChain, signer)
   const service = async function () {
-    return await contract.getTransitSteps()
+    await contract.cancelTransit()
+  }
+  return NodeWorker.async(service)
+}
+
+export async function finishTransit(currentChain: SimpleChain, signer: ethers.Signer): Promise<void> {
+  if (!signer || !currentChain) {
+    return
+  }
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    await contract.finishTransit()
   }
   return NodeWorker.async(service)
 }

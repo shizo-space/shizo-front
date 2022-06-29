@@ -19,6 +19,8 @@ import { ReactComponent as Tfuel } from '../../assets/tfuel.svg'
 import { ReactComponent as TeleportIcon } from '../../assets/teleport.svg'
 import { ReactComponent as NavigationIcon } from '../../assets/Navigation.svg'
 import { ReactComponent as PolygonIcon } from '../../assets/polygon.svg'
+import { ReactComponent as CloseIcon } from '../../assets/close-button.svg'
+import { ReactComponent as TaxiIcon } from '../../assets/Taxi.svg'
 
 import ChangePriceModal from '../ChangePriceModal'
 import OpenExternalWebsiteDialog from '../OpenExternalWebsiteDialog'
@@ -33,6 +35,8 @@ import {
   purchase,
   teleport,
   startTransit,
+  cancelTransit,
+  finishTransit,
 } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
@@ -114,7 +118,7 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
   const { defaultProvider: provider, currentChain } = useEvmProvider()
   const { activeWalletAddress, signer } = useEvmWallet()
   const block = useNewBlock()
-  const { run: mintNft } = useRequest<void, [string]>(
+  const { runAsync: mintNft } = useRequest<void, [string]>(
     // TODO signature
     mergeId =>
       mint(
@@ -140,8 +144,22 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
     },
   )
 
-  const { run: transitBegin } = useRequest<void, [number]>(
+  const { runAsync: transitBegin } = useRequest<void, [number]>(
     transitType => startTransit(transitType, steps, currentChain, signer),
+    {
+      manual: true,
+    },
+  )
+
+  const { runAsync: cancelActiveTransit } = useRequest<void, [void]>(
+    () => cancelTransit(currentChain, signer),
+    {
+      manual: true,
+    },
+  )
+
+  const { runAsync: finishActiveTransit } = useRequest<void, [void]>(
+    () => finishTransit(currentChain, signer),
     {
       manual: true,
     },
@@ -172,16 +190,8 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
       },
     })
     console.log(res)
-    onRoute(res.data.polyline_path)
-    setSteps([
-      {
-        tokenId: parseInt(data.id),
-        lat: Math.floor(userPosition.lat * 10 ** 6),
-        lon: Math.floor(userPosition.lon * 10 ** 6),
-        distance: 0,
-      },
-      ...res.data.route.steps,
-    ])
+    onRoute(res?.data?.polyline_path)
+    setSteps(res?.data?.route?.steps)
   }
 
   const { loading: ownerAddressLoading } = useRequest<string, [string]>(
@@ -410,6 +420,12 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
                   </CustomIconButton>
                   <CustomIconButton size="medium" onClick={() => transitBegin(0)} color="secondary">
                     <SvgIcon component={PolygonIcon} viewBox="0 0 24 24" />
+                  </CustomIconButton>
+                  <CustomIconButton size="medium" onClick={() => cancelActiveTransit()} color="secondary">
+                    <SvgIcon component={CloseIcon} viewBox="0 0 18 18" />
+                  </CustomIconButton>
+                  <CustomIconButton size="medium" onClick={() => finishActiveTransit()} color="secondary">
+                    <SvgIcon component={TaxiIcon} viewBox="0 0 24 24" />
                   </CustomIconButton>
                 </Box>
               )}

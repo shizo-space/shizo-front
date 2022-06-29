@@ -82,3 +82,9 @@ type TransitStep = {
   lon: number // 10 ** 6
   distance: number
 }
+
+type Transit = {
+  departureTime: number
+  stepsCount: number
+  t: number
+}

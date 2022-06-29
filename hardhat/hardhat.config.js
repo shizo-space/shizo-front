@@ -63,6 +63,12 @@ module.exports = {
   // Follow the directions, and uncomment the network you wish to deploy to.
 
   networks: {
+    hardhat: {
+      mining: {
+        auto: false,
+        interval: [2000, 5000],
+      },
+    },
     localhost: {
       url: 'http://localhost:8545',
       /*

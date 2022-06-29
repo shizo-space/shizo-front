@@ -21,9 +21,9 @@ contract Shizo is ERC721 {
 
   uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
   uint256 public constant ROYALITY = 5; // 5%
-  uint8 public constant WALK_SPEED = 1;
-  uint8 public constant RUN_SPEED = 5;
-  uint8 public constant TAXI_SPEED = 10;
+  uint8 public constant WALK_SPEED = 5;
+  uint8 public constant RUN_SPEED = 10;
+  uint8 public constant TAXI_SPEED = 16;
 
   uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
 
@@ -330,14 +330,18 @@ contract Shizo is ERC721 {
     transits[msg.sender].t = _type;
   }
 
-  function getDistanceTraversed() public view returns (uint32) {
-    require(transits[msg.sender].departureTime != 0, 'No active transit');
-    uint32 deltaTime = uint32(block.timestamp - transits[msg.sender].departureTime);
+  function getDistanceTraversed(address addrs) public view returns (uint32, uint) {
+    console.log("getDistanceTraversed");
+    require(transits[addrs].departureTime != 0, 'No active transit');
+    uint32 deltaTime = uint32(block.timestamp - transits[addrs].departureTime);
+    console.log(block.timestamp);
+    console.log(transits[addrs].departureTime);
+    console.log(deltaTime);
     require(deltaTime < MAX_DELTA_TIME, 'Invalid transit');
     uint8 speed;
-    if (transits[msg.sender].t == 0) {
+    if (transits[addrs].t == 0) {
       speed = WALK_SPEED;
-    } else if (transits[msg.sender].t == 1) {
+    } else if (transits[addrs].t == 1) {
       speed = RUN_SPEED;
     } else {
       speed = TAXI_SPEED;
@@ -345,29 +349,31 @@ contract Shizo is ERC721 {
 
     uint32 distance = deltaTime * speed;
     uint32 sumDistance = 0;
-    uint time = transits[msg.sender].departureTime;
-    for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
-      uint256 tokenId = transits[msg.sender].steps[i].tokenId;
+    uint time = transits[addrs].departureTime;
+    uint lastStepIndex = 0;
+    for (uint i = 0; i < transits[addrs].stepsCount; i++) {
+      uint256 tokenId = transits[addrs].steps[i].tokenId;
       // for (uint j = roadBlockStorage[tokenId].propsCount - 1; j >= roadBlockStorage[tokenId].startingIndex; j--) {
       //   if (roadBlockStorage[tokenId].props[j].modifiedTime < time && 
       //     (j == 0 || roadBlockStorage[tokenId].props[j - 1].modifiedTime >= time) && roadBlockStorage[tokenId].props[j].isBlock) {
       //     return sumDistance;
       //   }
       // }
-      if (sumDistance + transits[msg.sender].steps[i].distance > distance) {
+      if (sumDistance + transits[addrs].steps[i].distance > distance) {
+        lastStepIndex = i;
         break;
       }
 
-      sumDistance += transits[msg.sender].steps[i].distance;
-      time += transits[msg.sender].steps[i].distance / speed;
+      sumDistance += transits[addrs].steps[i].distance;
+      time += transits[addrs].steps[i].distance / speed;
     }
 
-    return distance;
+    return (distance, lastStepIndex);
   }
 
   function finishTransit() external {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    uint32 distance = getDistanceTraversed();
+    (uint32 distance, ) = getDistanceTraversed(msg.sender);
     uint32 totalDistance = 0;
     uint stepsCount = transits[msg.sender].stepsCount;
     for(uint i = 0; i < stepsCount; i++) {
@@ -377,15 +383,27 @@ contract Shizo is ERC721 {
     require(distance >= totalDistance, 'Transit not finished yet');
     staticPositions[msg.sender].lat = transits[msg.sender].steps[stepsCount - 1].lat;
     staticPositions[msg.sender].lon = transits[msg.sender].steps[stepsCount - 1].lon;
+    transits[msg.sender].departureTime = 0;
+    transits[msg.sender].stepsCount = 0;
   }
 
 
-  function getTransitSteps() public view returns(TransitStep[] memory) {
-    TransitStep[] memory steps = new TransitStep[](transits[msg.sender].stepsCount);
-    for (uint i = 0; i < transits[msg.sender].stepsCount; i++) {
-      steps[i] = (transits[msg.sender].steps[i]);
+  function getTransitSteps(address addrs) public view returns(TransitStep[] memory) {
+    TransitStep[] memory steps = new TransitStep[](transits[addrs].stepsCount);
+    for (uint i = 0; i < transits[addrs].stepsCount; i++) {
+      steps[i] = (transits[addrs].steps[i]);
     }
 
     return steps;
+  }
+
+  function cancelTransit() external {
+    require(transits[msg.sender].departureTime != 0, 'No active transit');
+    (, uint lastStepIndex) = getDistanceTraversed(msg.sender);
+    staticPositions[msg.sender].lat = transits[msg.sender].steps[lastStepIndex].lat;
+    staticPositions[msg.sender].lon = transits[msg.sender].steps[lastStepIndex].lon;
+
+    transits[msg.sender].departureTime = 0;
+    transits[msg.sender].stepsCount = 0;
   }
 }

@@ -76,25 +76,15 @@ async function getEntity(id: string | number): Promise<any> {
 
 function getDynamicPosition(distance: number, steps: TransitStep[], pline: string): Position {
   const coords = polyline.decode(pline, 6)
-  console.log(coords.map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)]))
   let currentDistance = 0
   for (let i = 0; i < steps.length; i++) {
     if (distance > steps[i].distance + currentDistance) {
       currentDistance += steps[i].distance
-      console.log('>>>>>>>>>>>>>>>>>>>')
-      console.log(i)
-      console.log(currentDistance)
-      console.log(distance)
     } else {
-      console.log('#################')
-      console.log(i)
       const amountOfLastStepTraversed = distance - currentDistance
       const startingIndex = coords
         .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
         .findIndex(([lat, lon]) => lat === steps[i].lat && lon === steps[i].lon)
-      console.log(startingIndex)
-      console.log(steps[i].lat)
-      console.log(steps[i].lon)
 
       if (startingIndex === -1) {
         return {
@@ -103,7 +93,6 @@ function getDynamicPosition(distance: number, steps: TransitStep[], pline: strin
         }
       }
       const lastStepCoords = coords.splice(startingIndex)
-      console.log(lastStepCoords)
       let sumDist = 0
       if (lastStepCoords.length === 1) {
         return {
@@ -155,53 +144,64 @@ export const Map = () => {
     bearing: 0,
   })
 
-  const { run: getActiveTransit } = useRequest<any, [void]>(
+  const { runAsync: getActiveTransit } = useRequest<Transit, [void]>(
     () => getTransit(activeWalletAddress, currentChain, provider),
     { manual: true },
   )
 
-  const { data: staticPosition } = useRequest<any, [void]>(
+  const { runAsync: getUserStaticPosition } = useRequest<void, [void]>(
     () => getStaticPosition(activeWalletAddress, currentChain, provider),
     {
       manual: true,
     },
   )
 
+  const { runAsync: getSteps } = useRequest<TransitStep[], [void]>(
+    () => getTransitSteps(activeWalletAddress, currentChain, provider),
+    {
+      manual: true,
+    },
+  )
+
+  const { runAsync: getDistance } = useRequest<[number, number], [void]>(
+    () => getDistanceTraversed(activeWalletAddress, currentChain, provider),
+    {
+      manual: true,
+    },
+  )
+
+  const { runAsync: cancelTransit } = useRequest<void, [void]>(() => cancelTransit())
+
   const getPosition = async () => {
     let pos = null
-    const transit = await getTransit(activeWalletAddress, currentChain, provider)
-    console.log(`transit: ${transit}`)
+    const transit: Transit = await getActiveTransit()
     if (!transit || transit.departureTime == 0) {
-      console.log('transit not found')
-      pos = await getStaticPosition(activeWalletAddress, currentChain, provider)
+      pos = await getUserStaticPosition()
+      console.log(`static pos: ${JSON.stringify(pos)}`)
     } else {
-      console.log(transit)
-      const steps = await getTransitSteps(currentChain, signer)
-      console.log('steps: ', steps)
-
-      const deltaTime = new Date().getTime() / 1000 - transit.departureTime
-      const distance = deltaTime * 5
-      console.log(`deltaTime: ${deltaTime}`)
+      const steps = await getSteps()
+      console.log(steps)
+      console.log('calling distance')
+      const [distance, _] = await getDistance()
       console.log(`distance: ${distance}`)
 
-      let ride = null
+      let polylinePath = null
       try {
         const { data } = await directionApi.get('/ride', {
           params: {
             walletAddress: activeWalletAddress,
           },
         })
-        ride = data
+        polylinePath = data?.polyline_path
       } catch (e) {
         console.error(e)
         console.error('ride not found!')
       }
 
-      if (!ride) {
-        pos = await getStaticPosition(activeWalletAddress, currentChain, provider)
+      if (!polylinePath) {
+        pos = await getUserStaticPosition()
       } else {
-        console.log('ride found!')
-        pos = getDynamicPosition(distance, steps, ride.polyline_path)
+        pos = getDynamicPosition(distance, steps, polylinePath)
         console.log(`dynamic pos: ${JSON.stringify(pos)}`)
       }
     }
@@ -237,9 +237,6 @@ export const Map = () => {
 
   const { data: position } = useRequest<any, [void]>(() => getPosition(), {
     pollingInterval: 1000,
-    onSuccess: transit => {
-      console.log(transit)
-    },
   })
 
   const { signMessage, signer } = useEvmWallet()
@@ -553,9 +550,7 @@ export const Map = () => {
   }
 
   const showRoute = pline => {
-    console.log(pline)
     const coords = polyline.decode(pline, 6)
-    console.log(coords)
     const source = mapRef.getSource('route') as GeoJSONSource
     source.setData({
       type: 'Feature',
