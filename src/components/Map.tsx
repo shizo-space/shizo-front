@@ -28,6 +28,7 @@ import { youtubeParser, thetaParser, haversineDistance, calcPolyDistance } from 
 import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import polyline from '@mapbox/polyline'
 import { directionApi } from '../utils/request'
+import { getSpawneds } from '../gql'
 // import MapboxInspect from 'mapbox-gl-inspect'
 
 const useStyle = makeStyles({
@@ -184,6 +185,36 @@ export const Map = () => {
     zoom: 14,
     pitch: 0,
     bearing: 0,
+  })
+
+  const { data: chests } = useRequest<any, [void]>(() => getSpawneds(), {
+    pollingInterval: 10000,
+    onSuccess: chests => {
+      const source = mapRef.getSource('chests') as GeoJSONSource
+      if (!source) {
+        console.error('chests source is not defined')
+        return
+      }
+      const features = chests.map(c => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [c.lon, c.lat],
+        },
+        properties: {
+          chest: 'chest',
+        },
+      }))
+      const data = {
+        type: 'FeatureCollection',
+        features,
+      }
+      source.setData(data)
+    },
+    onError: e => {
+      console.error("Couldn't spawn chests")
+      console.error(e)
+    },
   })
 
   const { runAsync: getActiveTransit } = useRequest<Transit, [void]>(
@@ -414,6 +445,41 @@ export const Map = () => {
             coordinates: [],
           },
         },
+      })
+
+      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/cat.png', (error, image) => {
+        if (error) throw error
+
+        map.addImage('chest', image)
+        map.addSource('chests', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              // {
+              //   type: 'Feature',
+              //   geometry: {
+              //     type: 'Point',
+              //     coordinates: [0, 0],
+              //   },
+              //   properties: {
+              //     chest: 'chest',
+              //   },
+              // },
+            ],
+          },
+        })
+
+        map.addLayer({
+          id: 'chests',
+          type: 'symbol',
+          source: 'chests',
+          layout: {
+            'icon-image': ['get', 'chest'], // reference the image
+            'icon-size': 0.2,
+            'icon-allow-overlap': true,
+          },
+        })
       })
 
       map.addLayer({
