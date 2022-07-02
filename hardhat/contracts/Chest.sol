@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import '@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol';
+import 'hardhat/console.sol';
 
 contract Chest is ERC721, VRFConsumerBaseV2 {
   using Strings for uint256;
@@ -22,12 +23,13 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
 
   // Rinkeby coordinator. For other networks,
   // see https://docs.chain.link/docs/vrf-contracts/#configurations
-  address vrfCoordinator = 0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed;
+  // address vrfCoordinator = 0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed;
 
   // The gas lane to use, which specifies the maximum gas price to bump to.
   // For a list of available gas lanes on each network,
   // see https://docs.chain.link/docs/vrf-contracts/#configurations
-  bytes32 keyHash = 0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
+  // bytes32 keyHash = 0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f; mumbai
+  bytes32 s_keyHash;
 
   // Depends on the number of requested values that you want sent to the
   // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
@@ -46,40 +48,49 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
 
   uint256 public s_requestId;
 
-  uint8 public constant LAT_LONG_PRECISION = 6;
+  uint8 public constant LAT_LON_PRECISION = 6;
 
   bool public pending_randomness = false;
 
-  uint256 private _minLat;
-  uint256 private _maxLat;
-  uint256 private _minLong;
-  uint256 private _maxLong;
-  uint256 private _minType;
-  uint256 private _maxType;
-  uint256 private _minTier;
-  uint256 private _maxTier;
+  int32 private _minLat;
+  int32 private _maxLat;
+  int32 private _minLon;
+  int32 private _maxLon;
+  uint8 private _minType;
+  uint8 private _maxType;
+  uint8 private _minTier;
+  uint8 private _maxTier;
 
-  mapping(uint256 => uint256) public lats;
-  mapping(uint256 => uint256) public longs;
-  mapping(uint256 => uint256) public types;
-  mapping(uint256 => uint256) public tiers;
+  struct TreasureChest {
+    int32 lat;
+    int32 lon;
+    uint8 t;
+    uint8 tier;
+  }
 
-  event Spawned(uint256 indexed tokenId, uint256 lat, uint256 long, uint256 type_, uint256 tier);
+  mapping(uint256 => TreasureChest) public treasureChests;
+
+  event Spawned(uint256 indexed tokenId, int32 lat, int32 lon, uint8 t, uint8 tier);
   event Claimed(
     address indexed owner,
     uint256 indexed tokenId,
-    uint256 lat,
-    uint256 long,
-    uint256 type_,
-    uint256 tier
+    int32 lat,
+    int32 lon,
+    uint8 t,
+    uint8 tier
   );
 
   using Counters for Counters.Counter;
   Counters.Counter public nextTokenId;
 
-  constructor() VRFConsumerBaseV2(vrfCoordinator) ERC721('Shizo Treasure Chest', 'ShizoTreasureChest') {
+  constructor(
+      address vrfCoordinator,
+      bytes32 keyHash,
+      uint64 subscriptionId
+    ) VRFConsumerBaseV2(vrfCoordinator) ERC721('Shizo Treasure Chest', 'ShizoTreasureChest') {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
-    s_subscriptionId = 327; // https://vrf.chain.link/new
+    s_subscriptionId = subscriptionId; // https://vrf.chain.link/new .. 327
+    s_keyHash = keyHash;
     owner = msg.sender;
   }
 
@@ -95,18 +106,18 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
 
   // Assumes the subscription is funded sufficiently.
   function requestRandomWords(
-    uint256 minLat,
-    uint256 maxLat,
-    uint256 minLong,
-    uint256 maxLong,
-    uint256 minType,
-    uint256 maxType,
-    uint256 minTier,
-    uint256 maxTier
+    int32 minLat,
+    int32 maxLat,
+    int32 minLon,
+    int32 maxLon,
+    uint8 minType,
+    uint8 maxType,
+    uint8 minTier,
+    uint8 maxTier
   ) external onlyOwner {
     // Will revert if subscription is not set and funded.
     s_requestId = COORDINATOR.requestRandomWords(
-      keyHash,
+      s_keyHash,
       s_subscriptionId,
       requestConfirmations,
       callbackGasLimit,
@@ -115,8 +126,8 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
 
     _minLat = minLat;
     _maxLat = maxLat;
-    _minLong = minLong;
-    _maxLong = maxLong;
+    _minLon = minLon;
+    _maxLon = maxLon;
     _minType = minType;
     _maxType = maxType;
     _minTier = minTier;
@@ -127,33 +138,37 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     uint256, /* requestId */
     uint256[] memory randomWords
   ) internal override {
-    lats[nextTokenId.current()] =
-      (randomWords[0] % ((_maxLat - _minLat) * 10**LAT_LONG_PRECISION + 1)) +
-      _minLat *
-      10**LAT_LONG_PRECISION;
+    int32 r0 = int32(int(randomWords[0] & ((1 << 31) - 1)));
+    int32 r1 = int32(int(randomWords[1] & ((1 << 31) - 1)));
 
-    longs[nextTokenId.current()] =
-      (randomWords[1] % ((_maxLong - _minLong) * 10**LAT_LONG_PRECISION + 1)) +
-      _minLong *
-      10**LAT_LONG_PRECISION;
-
-    types[nextTokenId.current()] = (randomWords[2] % (_maxType - _minType + 1)) + _minType;
-
-    tiers[nextTokenId.current()] = (randomWords[3] % (_maxTier - _minTier + 1)) + _minTier;
-  }
-
-  function spawn() external onlyOwner {
+    TreasureChest memory treasureChest = TreasureChest(
+      (r0 % ((_maxLat - _minLat) + 1)) + _minLat,
+      (r1 % ((_maxLon - _minLon) + 1)) + _minLon,
+      (uint8(randomWords[2] & ((1 << 7) - 1)) % (_maxType - _minType + 1)) + _minType,
+      (uint8(randomWords[3] & ((1 << 7) - 1)) % (_maxTier - _minTier + 1)) + _minTier
+    );
+    
+    treasureChests[nextTokenId.current()] = treasureChest;
     emit Spawned(
       nextTokenId.current(),
-      lats[nextTokenId.current()],
-      longs[nextTokenId.current()],
-      types[nextTokenId.current()],
-      tiers[nextTokenId.current()]
+      treasureChests[nextTokenId.current()].lat,
+      treasureChests[nextTokenId.current()].lon,
+      treasureChests[nextTokenId.current()].t,
+      treasureChests[nextTokenId.current()].tier
     );
+    console.log(nextTokenId.current());
     nextTokenId.increment();
   }
 
+  function fulfillRandomWordsTest(
+    uint256 requestId, /* requestId */
+    uint256[] memory randomWords
+  ) external onlyOwner {
+    fulfillRandomWords(requestId, randomWords);
+  }
+
   function mint(uint256 tokenId, bytes memory signature) public returns (uint256) {
+    // static position check shavad
     require(!_exists(tokenId), 'token exists');
     require(tokenId < nextTokenId.current(), 'Token not spawned yet');
 
@@ -166,10 +181,10 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     emit Claimed(
       msg.sender,
       nextTokenId.current(),
-      lats[nextTokenId.current()],
-      longs[nextTokenId.current()],
-      types[nextTokenId.current()],
-      tiers[nextTokenId.current()]
+      treasureChests[nextTokenId.current()].lat,
+      treasureChests[nextTokenId.current()].lon,
+      treasureChests[nextTokenId.current()].t,
+      treasureChests[nextTokenId.current()].tier
     );
     return tokenId;
   }

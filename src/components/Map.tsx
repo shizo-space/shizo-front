@@ -75,20 +75,6 @@ async function getEntity(id: string | number): Promise<any> {
 }
 
 function getDynamicPositionV2(distance: number, coords: any[]): Position {
-  // const startingIndex = coords
-  //   .map(([lat, lon]) => [Math.floor(lat * 10 ** 6), Math.floor(lon * 10 ** 6)])
-  //   .findIndex(([lat, lon]) => lat == steps[i - 1].lat && lon == steps[i - 1].lon)
-
-  // if (startingIndex === -1) {
-  //   console.log('>>>>> Starting index is -1')
-  //   console.log(steps[i - 1].lat, steps[i - 1].lon)
-
-  //   return {
-  //     lat: steps[i - 1].lat / 10 ** 6,
-  //     lon: steps[i - 1].lon / 10 ** 6,
-  //   }
-  // }
-
   if (coords.length === 1) {
     return {
       lat: coords[0].lat,
@@ -98,12 +84,8 @@ function getDynamicPositionV2(distance: number, coords: any[]): Position {
 
   let sumDist = 0
   for (let j = 1; j < coords.length; j++) {
-    const lastEdgeDistance = haversineDistance(
-      [coords[j].lon, coords[j].lat],
-      [coords[j - 1].lon, coords[j - 1].lat],
-    )
+    const lastEdgeDistance = coords[j - 1].distance
 
-    console.log(`sum dist: ${sumDist}`)
     if (distance > lastEdgeDistance + sumDist) {
       sumDist += lastEdgeDistance
       continue
@@ -111,17 +93,15 @@ function getDynamicPositionV2(distance: number, coords: any[]): Position {
 
     const traversed = distance - sumDist
     const portion = traversed / lastEdgeDistance
-    console.log(`Portion: ${portion}`)
     return {
       lat: coords[j - 1].lat + (coords[j].lat - coords[j - 1].lat) * portion,
       lon: coords[j - 1].lon + (coords[j].lon - coords[j - 1].lon) * portion,
     }
   }
 
-  const lastIndex = coords.length - 1
   return {
-    lat: coords[lastIndex].lat,
-    lon: coords[lastIndex].lon,
+    lat: coords[coords.length - 1].lat,
+    lon: coords[coords.length - 1].lon,
   }
 }
 
@@ -243,7 +223,6 @@ export const Map = () => {
     } else {
       const steps = await getSteps()
       console.log(steps)
-      console.log('calling distance')
       const [distance, _] = await getDistance()
       console.log(`distance: ${distance}`)
 

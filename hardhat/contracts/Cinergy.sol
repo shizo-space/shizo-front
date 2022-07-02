@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import 'hardhat/console.sol';
 
 contract Cinergy is ERC20Burnable {
   using Strings for uint256;
@@ -19,6 +20,7 @@ contract Cinergy is ERC20Burnable {
   }
 
   function claim(uint256 amount, bytes memory signature) external {
+    console.log("cinergy");
     bytes32 hashed = abi.encodePacked('cinergy:claim:', amount.toString()).toEthSignedMessageHash();
     require(_usedSignatures[hashed] == false, 'Signature already used');
 

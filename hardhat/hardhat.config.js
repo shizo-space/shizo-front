@@ -70,7 +70,9 @@ module.exports = {
       },
     },
     localhost: {
-      url: 'http://localhost:8545',
+      url: 'http://192.168.1.107:8545',
+      keyHash: '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc',
+      fundAmount: '1000000000000000000',
       /*
         notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
         (you can put in a mnemonic here to set the deployer locally)
@@ -605,4 +607,61 @@ task('purchase', 'Purchase an item')
 
     const tx = await contract.purchase(taskArgs.tokenId, { value: ethers.utils.parseEther(taskArgs.price) })
     console.log(tx)
+  })
+
+task('request-random-words', 'Request a random word')
+  .addParam('contract', 'The address of the API Consumer contract that you want to call')
+  .setAction(async (taskArgs, { network, ethers }) => {
+    console.log(taskArgs)
+    const contractAddr = taskArgs.contract
+    const networkId = network.name
+    console.log(
+      'Requesting a random word using VRF consumer contract ',
+      contractAddr,
+      ' on network ',
+      networkId,
+    )
+    const Chest = await ethers.getContractFactory('Chest')
+
+    // Get signer information
+    const accounts = await ethers.getSigners()
+    const signer = accounts[0]
+
+    const chestConsumer = new ethers.Contract(contractAddr, Chest.interface, signer)
+    const trx = await chestConsumer.requestRandomWords(37747709, 37753569, -122454813, -122446553, 0, 0, 1, 5)
+    console.log(
+      'Contract ',
+      contractAddr,
+      ' random number request successfully called. Transaction Hash: ',
+      trx.hash,
+    )
+    const res = await trx.wait()
+    console.log(trx)
+    console.log(res)
+
+    const trx2 = await chestConsumer.fulfillRandomWordsTest(1, [37751024143945, 1224516414271, 1, 2])
+    const res2 = await trx2.wait()
+    console.log(trx2)
+    console.log(res2)
+
+    console.log('Run the following to read the returned random number:')
+    console.log('yarn hardhat read-random-number --contract ' + contractAddr + ' --network ' + network.name)
+  })
+
+task('get-chests', 'Get spawned chests')
+  .addParam('contract', 'The address of the VRF contract that you want to read')
+  .setAction(async (taskArgs, { network, ethers }) => {
+    const contractAddr = taskArgs.contract
+    const networkId = network.name
+    console.log('Reading data from VRF contract ', contractAddr, ' on network ', networkId)
+    const Chest = await ethers.getContractFactory('Chest')
+
+    // Get signer information
+    const accounts = await ethers.getSigners()
+    const signer = accounts[0]
+
+    // Create connection to API Consumer Contract and call the createRequestTo function
+    const chestConsumer = new ethers.Contract(contractAddr, Chest.interface, signer)
+    const chest = await chestConsumer.treasureChests(0)
+    console.log(chest)
   })

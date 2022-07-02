@@ -1,13 +1,13 @@
-version: "3"
+version: '3'
 services:
   graph-node:
     image: graphprotocol/graph-node:v0.26.0-prerelease.0
     ports:
-      - "8000:8000"
-      - "8001:8001"
-      - "8020:8020"
-      - "8030:8030"
-      - "8040:8040"
+      - '8000:8000'
+      - '8001:8001'
+      - '8020:8020'
+      - '8030:8030'
+      - '8040:8040'
     depends_on:
       - ipfs
       - postgres
@@ -16,21 +16,22 @@ services:
       postgres_user: graph-node
       postgres_pass: let-me-in
       postgres_db: graph-node
-      ipfs: "ipfs:5001"
+      ipfs: 'ipfs:5001'
       # Change next line if you want to connect to a different JSON-RPC endpoint
-      ethereum: "thetatest:https://eth-rpc-api-testnet.thetatoken.org/rpc"
+      # ethereum: 'thetatest:https://eth-rpc-api-testnet.thetatoken.org/rpc'
+      ethereum: 'localhost:http://192.168.1.107:8545/rpc'
       GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.12.1
     ports:
-      - "5001:5001"
+      - '5001:5001'
     volumes:
       - ./data/ipfs:/data/ipfs
   postgres:
     image: postgres
     expose:
-      - "5432"
-    command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
+      - '5432'
+    command: ['postgres', '-cshared_preload_libraries=pg_stat_statements']
     environment:
       POSTGRES_USER: graph-node
       POSTGRES_PASSWORD: let-me-in

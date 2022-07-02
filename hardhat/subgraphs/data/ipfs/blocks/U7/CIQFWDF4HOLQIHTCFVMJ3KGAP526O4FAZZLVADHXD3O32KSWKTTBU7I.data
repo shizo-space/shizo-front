@@ -1,0 +1,28 @@
+
+Æ¾dataSources:
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmSTvCA6LgLeaUL8GrRsWCfepBzohsMt3AE7Jx7usTUfTF
+          name: Chest
+      apiVersion: 0.0.5
+      entities:
+        - Spawned
+      eventHandlers:
+        - event: 'Spawned(indexed uint256,int32,int32,uint8,uint8)'
+          handler: handleSpawned
+      file:
+        /: /ipfs/QmWJh8LuixEkoJV9Bwc1Fm6uGdQdtV3UHYyHzaKAaPQ5P4
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: Chest
+    network: chert
+    source:
+      abi: Chest
+      address: '0x43C2c4E17DBded321F6F88c2e68E4E9952F915Cc'
+schema:
+  file:
+    /: /ipfs/Qmezhc1sxhdvuuQLEnj7XeNMZHPbf93rmabGBegrWdxgDZ
+specVersion: 0.0.4
+¾

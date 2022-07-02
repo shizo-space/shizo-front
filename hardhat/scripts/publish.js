@@ -60,6 +60,7 @@ function publishContract(contractName, networkName) {
 }
 
 async function main() {
+
   const directories = fs.readdirSync(deploymentsDir)
   directories.forEach(function (directory) {
     const files = fs.readdirSync(`${deploymentsDir}/${directory}`)

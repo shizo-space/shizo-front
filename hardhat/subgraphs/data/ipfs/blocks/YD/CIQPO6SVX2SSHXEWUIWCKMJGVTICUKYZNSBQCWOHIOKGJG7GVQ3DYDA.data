@@ -1,0 +1,10 @@
+
+ketype Spawned @entity {
+  id: ID!
+  tokenId: String!
+  lat: Int!
+  lon: Int!
+  t: Int!
+  tier: Int!
+}
+e
