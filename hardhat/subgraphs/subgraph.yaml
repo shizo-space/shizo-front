@@ -6,7 +6,7 @@ dataSources:
     name: Chest
     network: chert
     source:
-      address: '0x43C2c4E17DBded321F6F88c2e68E4E9952F915Cc'
+      address: '0x8C51bf29008c30927c8e1B571108896AC11B8E49'
       abi: Chest
     mapping:
       kind: ethereum/events

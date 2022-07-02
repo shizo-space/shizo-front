@@ -70,7 +70,7 @@ module.exports = {
       },
     },
     localhost: {
-      url: 'http://192.168.42.50:8545',
+      url: `http://${process.env.HOST}:8545`,
       keyHash: '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc',
       fundAmount: '1000000000000000000',
       /*
@@ -639,14 +639,12 @@ task('request-random-words', 'Request a random word')
     console.log(trx)
     console.log(res)
 
-    const trx2 = await chestConsumer.fulfillRandomWordsTest(1,
-      [
-        Math.floor(Math.random() * 37751024143945),
-        Math.floor(Math.random() * 1224516414271),
-        Math.floor(Math.random() * 16),
-        Math.floor(Math.random() * 16),
-      ]
-    )
+    const trx2 = await chestConsumer.fulfillRandomWordsTest(1, [
+      Math.floor(Math.random() * 37751024143945),
+      Math.floor(Math.random() * 1224516414271),
+      Math.floor(Math.random() * 16),
+      Math.floor(Math.random() * 16),
+    ])
     const res2 = await trx2.wait()
     console.log(trx2)
     console.log(res2)
