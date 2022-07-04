@@ -29,6 +29,7 @@ import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvide
 import polyline from '@mapbox/polyline'
 import { directionApi } from '../utils/request'
 import { getSpawneds } from '../gql'
+import { EntityType } from '../enums'
 // import MapboxInspect from 'mapbox-gl-inspect'
 
 const useStyle = makeStyles({
@@ -71,6 +72,7 @@ async function getEntity(id: string | number): Promise<any> {
     leftTop: data.left_top,
     rightBottom: data.right_bottom,
     isBuilding: data.is_building,
+    type: data.isBuilding ? EntityType.Building : EntityType.Road,
     color: data.color,
   }
 }
@@ -169,12 +171,7 @@ export const Map = () => {
   const [name, setName] = useState('')
   const [editingLand, setEditingLand] = useState<any>(null)
   const [mergeId, setMergeId] = useState('')
-  const [entity, setEntity] = useState({
-    id: mergeId,
-    name: '',
-    description: '',
-    embeddedLink: '',
-  })
+  const [entity, setEntity] = useState<any>(null)
   const [version, setVersion] = useState(0)
   const [checkInitialColorized, setCheckInitialColorized] = useState(false)
   const [mapRef, setMapRef] = useState<MapType | null>(null)
@@ -188,7 +185,7 @@ export const Map = () => {
   })
 
   const { data: chests } = useRequest<any, [void]>(() => getSpawneds(), {
-    pollingInterval: 10000,
+    pollingInterval: 5000,
     onSuccess: chests => {
       const source = mapRef.getSource('chests') as GeoJSONSource
       if (!source) {
@@ -203,6 +200,9 @@ export const Map = () => {
         },
         properties: {
           chest: 'chest',
+          lat: c.lat,
+          lon: c.lon,
+          tokenId: c.tokenId,
         },
       }))
       const data = {
@@ -400,7 +400,7 @@ export const Map = () => {
     })
 
     map.on('load', () => {
-      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/cat.png', (error, image) => {
+      map.loadImage('https://shizo.space/static/icons/Avatar3.png', (error, image) => {
         if (error) throw error
 
         map.addImage('cat', image)
@@ -430,7 +430,7 @@ export const Map = () => {
           layout: {
             visibility: 'none',
             'icon-image': ['get', 'avatar'], // reference the image
-            'icon-size': 0.25,
+            'icon-size': 0.5,
           },
         })
       })
@@ -447,7 +447,7 @@ export const Map = () => {
         },
       })
 
-      map.loadImage('https://docs.mapbox.com/mapbox-gl-js/assets/cat.png', (error, image) => {
+      map.loadImage('https://shizo.space/static/icons/Chest.png', (error, image) => {
         if (error) throw error
 
         map.addImage('chest', image)
@@ -476,7 +476,7 @@ export const Map = () => {
           source: 'chests',
           layout: {
             'icon-image': ['get', 'chest'], // reference the image
-            'icon-size': 0.2,
+            'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.3, 18, 0.75],
             'icon-allow-overlap': true,
           },
         })
@@ -598,14 +598,32 @@ export const Map = () => {
         const feature = selectedFeatures[0]
 
         if (!feature) return
-        const mergeId = feature.properties?.merge_id
+        console.log(feature)
 
-        setName(feature.properties?.name ?? '')
-        setMergeId(mergeId ?? '')
-        setEditingLand(null)
-        colorize(mergeId)
-        fetchEntity(mergeId, false, lngLat, null, true)
-        history.push(`/${mergeId}`)
+        if (feature.layer?.id === 'chests') {
+          setEntity({
+            id: feature.properties?.tokenId,
+            lat: feature.properties?.lat,
+            lon: feature.properties?.lon,
+            type: EntityType.Chest,
+          })
+        } else {
+          const mergeId = feature.properties?.merge_id
+
+          setName(feature.properties?.name ?? '')
+          setMergeId(mergeId ?? '')
+          setEditingLand(null)
+          colorize(mergeId)
+          fetchEntity(mergeId, false, lngLat, null, true)
+          history.push(`/${mergeId}`)
+        }
+      })
+
+      map.on('mouseenter', 'chests', () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+      map.on('mouseleave', 'chests', () => {
+        map.getCanvas().style.cursor = 'default'
       })
     })
   }, [mapRef])

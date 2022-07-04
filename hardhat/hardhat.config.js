@@ -71,8 +71,10 @@ module.exports = {
     },
     localhost: {
       url: `http://${process.env.HOST}:8545`,
+      // url: 'http://127.0.0.1:8545',
       keyHash: '0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc',
       fundAmount: '1000000000000000000',
+      // gasPrice: 110000000000,
       /*
         notice no mnemonic here? it will just use account 0 of the hardhat node to deploy
         (you can put in a mnemonic here to set the deployer locally)

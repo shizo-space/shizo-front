@@ -44,7 +44,7 @@ import { shortenAddress } from '../../utils'
 import { baseConfig } from '../../configs'
 import { BigNumber, ethers } from 'ethers'
 import useNewBlock from '../../adaptors/evm-provider-adaptor/hooks/useNewBlock'
-import { getMint, getPurchases } from '../../gql'
+// import { getMint, getPurchases } from '../../gql'
 import Chart from '../Chart'
 import axios from 'axios'
 import { parse } from 'path'
@@ -228,29 +228,29 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
     },
   )
 
-  const { loading: purchasesLoading } = useRequest<any, [void]>(() => getPurchases(data?.id), {
-    onSuccess: res => {
-      console.log(res)
-      setPurchases(res)
-    },
-    onError: err => {
-      console.error(err)
-      setPurchases([])
-    },
-    refreshDeps: [data, currentChain, block],
-  })
+  // const { loading: purchasesLoading } = useRequest<any, [void]>(() => getPurchases(data?.id), {
+  //   onSuccess: res => {
+  //     console.log(res)
+  //     setPurchases(res)
+  //   },
+  //   onError: err => {
+  //     console.error(err)
+  //     setPurchases([])
+  //   },
+  //   refreshDeps: [data, currentChain, block],
+  // })
 
-  const { loading: mintLoading } = useRequest<any, [void]>(() => getMint(data?.id), {
-    onSuccess: res => {
-      console.log(res)
-      setMintData(res)
-    },
-    onError: err => {
-      console.error(err)
-      setMintData(null)
-    },
-    refreshDeps: [data, currentChain, block],
-  })
+  // const { loading: mintLoading } = useRequest<any, [void]>(() => getMint(data?.id), {
+  //   onSuccess: res => {
+  //     console.log(res)
+  //     setMintData(res)
+  //   },
+  //   onError: err => {
+  //     console.error(err)
+  //     setMintData(null)
+  //   },
+  //   refreshDeps: [data, currentChain, block],
+  // })
 
   const isOwnerOfEntity = useMemo(() => {
     return ownerAddress && ownerAddress === activeWalletAddress
@@ -429,7 +429,7 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
                   </CustomIconButton>
                 </Box>
               )}
-
+              {/* 
               {!purchasesLoading && purchases?.length > 0 ? (
                 <Button
                   sx={{
@@ -447,7 +447,7 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
                 >
                   Trading History
                 </Button>
-              ) : null}
+              ) : null} */}
 
               {data.externalLink && (
                 <Button

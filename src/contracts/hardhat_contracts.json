@@ -1960,7 +1960,7 @@
       "chainId": "31337",
       "contracts": {
         "VRFCoordinatorV2Mock": {
-          "address": "0xbf3fCf2dEacB191E08209c816Cd6383A11c27bea",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
           "abi": [
             {
               "inputs": [
@@ -2413,7 +2413,7 @@
           ]
         },
         "Cinergy": {
-          "address": "0x2FB802A6e6AC5f9561F8DBC024df847Cf78aF4dc",
+          "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
           "abi": [
             {
               "inputs": [],
@@ -2755,7 +2755,7 @@
           ]
         },
         "Chest": {
-          "address": "0x8C51bf29008c30927c8e1B571108896AC11B8E49",
+          "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
           "abi": [
             {
               "inputs": [
@@ -3414,7 +3414,7 @@
           ]
         },
         "Shizo": {
-          "address": "0xf6E066f06fCE2a0c13323Be55f24FF7E05d9c9dA",
+          "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           "abi": [
             {
               "inputs": [
