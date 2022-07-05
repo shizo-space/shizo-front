@@ -8,6 +8,9 @@ import '@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import '@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol';
 import 'hardhat/console.sol';
 
+import './math.sol';
+
+
 contract Chest is ERC721, VRFConsumerBaseV2 {
   using Strings for uint256;
   using Strings for uint8;
@@ -149,6 +152,19 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     );
     
     treasureChests[nextTokenId.current()] = treasureChest;
+    // console.log(2);
+    // math.cos(30);
+    console.log(math.distance2(37767399, -122444765, 37771127, -122445575));
+    // console.log(uint64(math.sin(0)));
+    // console.log(uint64(math.sin(30)));
+    // console.log(uint64(math.sin(45)));
+    // console.log(uint64(math.sin(60)));
+    // console.log(uint64(math.sin(90)));
+
+    // console.log(uint(res));
+    // console.log(math.getNegativeUint());
+    // console.log(math.getNegativeUintPower());
+    
     emit Spawned(
       nextTokenId.current(),
       treasureChests[nextTokenId.current()].lat,
@@ -156,7 +172,6 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
       treasureChests[nextTokenId.current()].t,
       treasureChests[nextTokenId.current()].tier
     );
-    console.log(nextTokenId.current());
     nextTokenId.increment();
   }
 
@@ -167,24 +182,22 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     fulfillRandomWords(requestId, randomWords);
   }
 
-  function mint(uint256 tokenId, bytes memory signature) public returns (uint256) {
+  function mint(uint256 tokenId) public returns (uint256) {
     // static position check shavad
+
+    
     require(!_exists(tokenId), 'token exists');
     require(tokenId < nextTokenId.current(), 'Token not spawned yet');
-
-    bytes memory hashed = abi.encodePacked('chest:mint:', tokenId.toString());
-    address signer = hashed.toEthSignedMessageHash().recover(signature);
-    require(owner == signer, 'Invalid signature');
 
     _safeMint(msg.sender, tokenId);
 
     emit Claimed(
       msg.sender,
-      nextTokenId.current(),
-      treasureChests[nextTokenId.current()].lat,
-      treasureChests[nextTokenId.current()].lon,
-      treasureChests[nextTokenId.current()].t,
-      treasureChests[nextTokenId.current()].tier
+      tokenId,
+      treasureChests[tokenId].lat,
+      treasureChests[tokenId].lon,
+      treasureChests[tokenId].t,
+      treasureChests[tokenId].tier
     );
     return tokenId;
   }

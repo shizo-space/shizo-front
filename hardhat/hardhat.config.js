@@ -65,8 +65,8 @@ module.exports = {
   networks: {
     hardhat: {
       mining: {
-        auto: false,
-        interval: [2000, 5000],
+        auto: true,
+        // interval: [2000, 5000],
       },
     },
     localhost: {

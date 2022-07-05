@@ -192,7 +192,7 @@ export const Map = () => {
         console.error('chests source is not defined')
         return
       }
-      const features = chests.map(c => ({
+      const features = (chests ?? []).map(c => ({
         type: 'Feature',
         geometry: {
           type: 'Point',
@@ -353,8 +353,8 @@ export const Map = () => {
     const map = new maplibregl.Map({
       container: 'map',
       // style: 'https://shizo.space/static/configs/shizo-style.json',
-      style: 'https://map.metagate.land/static/configs/metagate-style.json',
-      // style: 'http://localhost:8000/metagate-style.json',
+      style: 'https://map.metagate.land/static/configs/shizo-play-style.json',
+      // style: 'http://localhost:8080/shizo-play-style.json',
       // maxBounds: [
       //   [-122.731657, 37.544461], // Southwest coordinates
       //   [-122.104556, 37.889077], // Northeast coordinates
@@ -400,6 +400,41 @@ export const Map = () => {
     })
 
     map.on('load', () => {
+      map.loadImage('https://shizo.space/static/icons/Chest.png', (error, image) => {
+        if (error) throw error
+
+        map.addImage('chest', image)
+        map.addSource('chests', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              // {
+              //   type: 'Feature',
+              //   geometry: {
+              //     type: 'Point',
+              //     coordinates: [0, 0],
+              //   },
+              //   properties: {
+              //     chest: 'chest',
+              //   },
+              // },
+            ],
+          },
+        })
+
+        map.addLayer({
+          id: 'chests',
+          type: 'symbol',
+          source: 'chests',
+          layout: {
+            'icon-image': ['get', 'chest'], // reference the image
+            'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.3, 18, 0.75],
+            'icon-allow-overlap': true,
+          },
+        })
+      })
+
       map.loadImage('https://shizo.space/static/icons/Avatar3.png', (error, image) => {
         if (error) throw error
 
@@ -445,41 +480,6 @@ export const Map = () => {
             coordinates: [],
           },
         },
-      })
-
-      map.loadImage('https://shizo.space/static/icons/Chest.png', (error, image) => {
-        if (error) throw error
-
-        map.addImage('chest', image)
-        map.addSource('chests', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: [
-              // {
-              //   type: 'Feature',
-              //   geometry: {
-              //     type: 'Point',
-              //     coordinates: [0, 0],
-              //   },
-              //   properties: {
-              //     chest: 'chest',
-              //   },
-              // },
-            ],
-          },
-        })
-
-        map.addLayer({
-          id: 'chests',
-          type: 'symbol',
-          source: 'chests',
-          layout: {
-            'icon-image': ['get', 'chest'], // reference the image
-            'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.3, 18, 0.75],
-            'icon-allow-overlap': true,
-          },
-        })
       })
 
       map.addLayer({
