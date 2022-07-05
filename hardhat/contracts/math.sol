@@ -12,11 +12,15 @@ library math {
     int16 dlat = int16(lat2 - lat1);
     int16 dlon = int16(lon2 - lon1);
     // (cos(lat) * sin(lon) * dlon + cos(lon) * sin(lat) * dlat) ** 2 +  (sin(lat) * sin(lon) * dlon - cos(lon) * sin(lat) * dlat) ** 2
-    int16 lat = int16(lat1 / 10000000);
-    int16 lon = int16(lon1 / 10000000);
-    
-    int dx = cos(lat) * sin(lon) * dlon + cos(lon) * sin(lat) * dlat;
-    int dy = sin(lat) * sin(lon) * dlon - cos(lon) * sin(lat) * dlat;
+    int16 lat = int16(lat1 / 1000000);
+    // int16 lon = int16(lon1 / 1000000);
+
+    // https://www.themathdoctors.org/distances-on-earth-3-planar-approximation/
+    int dx = int(dlon) * cos(lat);
+    int dy = int(dlat) * 65535; // uint16 max value
+
+    // int dx = cos(lat) * sin(lon) * dlon + cos(lon) * sin(lat) * dlat;
+    // int dy = sin(lat) * sin(lon) * dlon - cos(lon) * sin(lat) * dlat;
 
     return uint256((dx * dx) + (dy * dy));
   }
