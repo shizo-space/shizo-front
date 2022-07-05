@@ -19,7 +19,7 @@ services:
       ipfs: 'ipfs:5001'
       # Change next line if you want to connect to a different JSON-RPC endpoint
       # ethereum: 'thetatest:https://eth-rpc-api-testnet.thetatoken.org/rpc'
-      ethereum: 'chert:http://192.168.1.107:8545/rpc'
+      ethereum: 'chert:http://${HOST}:8545/rpc'
       GRAPH_LOG: info
   ipfs:
     image: ipfs/go-ipfs:v0.12.1
