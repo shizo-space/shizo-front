@@ -1,0 +1,23 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Chest
+    network: chert
+    source:
+      address: ${CONTRACT}
+      abi: Chest
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Spawned
+      abis:
+        - name: Chest
+          file: ./abis/Chest.json
+      eventHandlers:
+        - event: Spawned(indexed uint256,int32,int32,uint8,uint8)
+          handler: handleSpawned
+      file: ./src/chest.ts
