@@ -4,6 +4,7 @@ hardhat/subgraph/data/*
 hardhat/subgraphs/data/*
 
 cont.txt
+*.log
 
 # dependencies
 node_modules

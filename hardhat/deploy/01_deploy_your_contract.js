@@ -56,7 +56,8 @@ module.exports = async ({ deployments, network, getChainId }) => {
   // Get signer information
 
   const shenConsumer = new ethers.Contract(Shen.address, ShenFactory.interface, deployer)
-  await shenConsumer.approve(Chest.address, BigNumber.from(ethers.utils.parseEther('500000')))
+  await shenConsumer.approve(Chest.address, ethers.utils.parseEther('500000'))
+  await shenConsumer.approve(Shizo.address, ethers.utils.parseEther('500000'))
 
   await verifyOnEtherscan(chainId, Shen, Shizo, Chest)
 }

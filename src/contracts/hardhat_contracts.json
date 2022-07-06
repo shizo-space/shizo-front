@@ -1960,7 +1960,7 @@
       "chainId": "31337",
       "contracts": {
         "VRFCoordinatorV2Mock": {
-          "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
           "abi": [
             {
               "inputs": [
@@ -2413,7 +2413,7 @@
           ]
         },
         "ShizoEnergy": {
-          "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+          "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
           "abi": [
             {
               "inputs": [],
@@ -2755,13 +2755,13 @@
           ]
         },
         "Shizo": {
-          "address": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+          "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
           "abi": [
             {
               "inputs": [
                 {
                   "internalType": "address",
-                  "name": "_cinergy",
+                  "name": "_shenAddress",
                   "type": "address"
                 }
               ],
@@ -2916,6 +2916,19 @@
             },
             {
               "inputs": [],
+              "name": "BIKE_SPEED",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
               "name": "MAX_DELTA_TIME",
               "outputs": [
                 {
@@ -2955,19 +2968,6 @@
             },
             {
               "inputs": [],
-              "name": "RUN_SPEED",
-              "outputs": [
-                {
-                  "internalType": "uint8",
-                  "name": "",
-                  "type": "uint8"
-                }
-              ],
-              "stateMutability": "view",
-              "type": "function"
-            },
-            {
-              "inputs": [],
               "name": "TAXI_SPEED",
               "outputs": [
                 {
@@ -2990,6 +2990,13 @@
                 }
               ],
               "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "abortTransit",
+              "outputs": [],
+              "stateMutability": "nonpayable",
               "type": "function"
             },
             {
@@ -3052,19 +3059,6 @@
               "name": "changeRoadLimitations",
               "outputs": [],
               "stateMutability": "nonpayable",
-              "type": "function"
-            },
-            {
-              "inputs": [],
-              "name": "cinergy",
-              "outputs": [
-                {
-                  "internalType": "address",
-                  "name": "",
-                  "type": "address"
-                }
-              ],
-              "stateMutability": "view",
               "type": "function"
             },
             {
@@ -3535,6 +3529,19 @@
               "type": "function"
             },
             {
+              "inputs": [],
+              "name": "shenAddress",
+              "outputs": [
+                {
+                  "internalType": "address",
+                  "name": "",
+                  "type": "address"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
               "inputs": [
                 {
                   "internalType": "uint256",
@@ -3769,7 +3776,7 @@
           ]
         },
         "Chest": {
-          "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+          "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
           "abi": [
             {
               "inputs": [
@@ -3795,7 +3802,7 @@
                 },
                 {
                   "internalType": "address",
-                  "name": "shizoEnergyAddress",
+                  "name": "_shenAddress",
                   "type": "address"
                 }
               ],

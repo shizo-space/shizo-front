@@ -14,16 +14,19 @@ contract Shizo is ERC721 {
   using ECDSA for bytes32;
   using ECDSA for bytes;
 
-  address public cinergy;
+  address public shenAddress;
   address public owner;
 
   uint256 MAX_INT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
   uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
   uint256 public constant ROYALITY = 5; // 5%
+
   uint8 public constant WALK_SPEED = 5;
-  uint8 public constant RUN_SPEED = 10;
-  uint8 public constant TAXI_SPEED = 16;
+  uint8 public constant BIKE_SPEED = 10;
+  uint8 public constant TAXI_SPEED = 25;
+
+  mapping(uint8 => uint256) shenConsumption; 
 
   uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
 
@@ -91,9 +94,14 @@ contract Shizo is ERC721 {
 
   error RoadBlocked(uint256 tokenId); 
 
-  constructor(address _cinergy) ERC721('Shizo', 'Shizo') {
-    cinergy = _cinergy;
+  constructor(address _shenAddress) ERC721('Shizo', 'Shizo') {
+    shenAddress = _shenAddress;
     owner = msg.sender;
+
+    uint8 decimals = ERC20(shenAddress).decimals();
+    shenConsumption[0] = 1 * (10 ** decimals) / 1000;
+    shenConsumption[1] = 3 * (10 ** decimals) / 1000;
+    shenConsumption[2] = 10 * (10 ** decimals) / 1000;
   }
 
   function toString(int32 value) internal pure returns (string memory) {
@@ -230,7 +238,7 @@ contract Shizo is ERC721 {
   }
 
   function shizoRequiredForLvlup(uint256 tokenId) public view returns (uint256) {
-    return entities[tokenId].level * 10 * 10**ERC20(cinergy).decimals(); // 10 CINERGY * current level
+    return entities[tokenId].level * 10 * 10**ERC20(shenAddress).decimals(); // 10 CINERGY * current level
   }
 
   function lvlup(uint256 tokenId) external {
@@ -238,11 +246,11 @@ contract Shizo is ERC721 {
 
     // LOGIC HERE
 
-    uint256 requiredCinergy = shizoRequiredForLvlup(tokenId);
+    uint256 shenRequired = shizoRequiredForLvlup(tokenId);
 
-    require(IERC20(cinergy).balanceOf(msg.sender) >= requiredCinergy, 'Not enough CINERGY');
+    require(IERC20(shenAddress).balanceOf(msg.sender) >= shenRequired, 'Not enough SHEN');
 
-    ERC20Burnable(cinergy).burnFrom(msg.sender, requiredCinergy);
+    ERC20Burnable(shenAddress).burnFrom(msg.sender, shenRequired);
     entities[tokenId].level += 1;
 
     emit LevelUp(ownerOf(tokenId), tokenId, entities[tokenId].level);
@@ -342,7 +350,7 @@ contract Shizo is ERC721 {
     if (transits[addrs].t == 0) {
       speed = WALK_SPEED;
     } else if (transits[addrs].t == 1) {
-      speed = RUN_SPEED;
+      speed = BIKE_SPEED;
     } else {
       speed = TAXI_SPEED;
     }
@@ -381,6 +389,14 @@ contract Shizo is ERC721 {
     }
 
     require(distance >= totalDistance, 'Transit not finished yet');
+
+    uint256 shenRequired = shenConsumption[transits[msg.sender].t] * distance;
+    console.log(shenRequired);
+    console.log(IERC20(shenAddress).balanceOf(msg.sender));
+
+    require(IERC20(shenAddress).balanceOf(msg.sender) >= shenRequired, 'Not enough SHEN');
+    IERC20(shenAddress).transferFrom(msg.sender, owner, shenRequired);
+
     staticPositions[msg.sender].lat = transits[msg.sender].steps[stepsCount - 1].lat;
     staticPositions[msg.sender].lon = transits[msg.sender].steps[stepsCount - 1].lon;
     transits[msg.sender].departureTime = 0;
@@ -400,10 +416,22 @@ contract Shizo is ERC721 {
 
   function cancelTransit() external {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    (, uint lastStepIndex) = getDistanceTraversed(msg.sender);
+    (uint32 distance, uint lastStepIndex) = getDistanceTraversed(msg.sender);
+    uint256 shenRequired = shenConsumption[transits[msg.sender].t] * distance;
+    console.log(shenRequired);
+    console.log(IERC20(shenAddress).balanceOf(msg.sender));
+    require(IERC20(shenAddress).balanceOf(msg.sender) >= shenRequired, 'Not enough SHEN');
+    ERC20(shenAddress).transfer(owner, shenRequired);
+
     staticPositions[msg.sender].lat = transits[msg.sender].steps[lastStepIndex].lat;
     staticPositions[msg.sender].lon = transits[msg.sender].steps[lastStepIndex].lon;
 
+    transits[msg.sender].departureTime = 0;
+    transits[msg.sender].stepsCount = 0;
+  }
+
+  function abortTransit() external {
+    require(transits[msg.sender].departureTime != 0, 'No active transit');
     transits[msg.sender].departureTime = 0;
     transits[msg.sender].stepsCount = 0;
   }

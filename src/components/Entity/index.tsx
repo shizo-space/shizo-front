@@ -49,6 +49,7 @@ import Chart from '../Chart'
 import axios from 'axios'
 import { parse } from 'path'
 import Chest from '../Chest'
+import { approve } from '../../contract-clients/shenContract.client'
 
 const useStyle = makeStyles((theme: any) => ({
   root: {
@@ -159,12 +160,9 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
     },
   )
 
-  const { runAsync: finishActiveTransit } = useRequest<void, [void]>(
-    () => finishTransit(currentChain, signer),
-    {
-      manual: true,
-    },
-  )
+  const { runAsync: finishActiveTransit } = useRequest<void, [void]>(() => approveAndFinishTransit(), {
+    manual: true,
+  })
 
   const { run: teleportToLand } = useRequest<void, [string]>(
     mergeId => teleport(mergeId, currentChain, signer),
@@ -172,6 +170,11 @@ const Entity: FC<EntityProps> = ({ data, loading, userPosition, onFocus, onEdit,
       manual: true,
     },
   )
+
+  async function approveAndFinishTransit() {
+    await approve(ethers.utils.parseEther('1000'), currentChain, signer)
+    await finishTransit(currentChain, signer)
+  }
 
   async function navigate() {
     if (!data) {

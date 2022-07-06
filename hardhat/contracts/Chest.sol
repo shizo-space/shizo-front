@@ -97,21 +97,22 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
       bytes32 keyHash,
       uint64 subscriptionId,
       address payable shizoAddress,
-      address shizoEnergyAddress
+      address _shenAddress
     ) VRFConsumerBaseV2(vrfCoordinator) ERC721('Shizo Treasure Chest', 'ShizoTreasureChest') {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
     s_subscriptionId = subscriptionId; // https://vrf.chain.link/new .. 327
     s_keyHash = keyHash;
     shizo = Shizo(shizoAddress);
-    shenAddress = shizoEnergyAddress;
+    shenAddress = _shenAddress;
     
     owner = msg.sender;
     
-    tierToAmount[1] = 1000 * 10 ** 18;
-    tierToAmount[2] = 2000 * 10 ** 18;
-    tierToAmount[3] = 5000 * 10 ** 18;
-    tierToAmount[4] = 10000 * 10 ** 18;
-    tierToAmount[5] = 30000 * 10 ** 18;
+    uint8 decimals = ERC20(shenAddress).decimals();
+    tierToAmount[1] = 1000 * 10 ** decimals;
+    tierToAmount[2] = 2000 * 10 ** decimals;
+    tierToAmount[3] = 5000 * 10 ** decimals;
+    tierToAmount[4] = 10000 * 10 ** decimals;
+    tierToAmount[5] = 30000 * 10 ** decimals;
   }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
