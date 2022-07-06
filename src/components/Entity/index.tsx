@@ -48,6 +48,7 @@ import useNewBlock from '../../adaptors/evm-provider-adaptor/hooks/useNewBlock'
 import Chart from '../Chart'
 import axios from 'axios'
 import { parse } from 'path'
+import Chest from '../Chest'
 
 const useStyle = makeStyles((theme: any) => ({
   root: {

@@ -6,7 +6,7 @@ dataSources:
     name: Chest
     network: chert
     source:
-      address: ${CONTRACT}
+      address: '${CONTRACT}'
       abi: Chest
     mapping:
       kind: ethereum/events

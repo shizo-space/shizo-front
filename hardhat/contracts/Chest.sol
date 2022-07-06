@@ -8,6 +8,7 @@ import '@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol';
 import '@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol';
 import 'hardhat/console.sol';
 
+import './Shizo.sol';
 import './math.sol';
 
 
@@ -34,6 +35,9 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
   // bytes32 keyHash = 0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f; mumbai
   bytes32 s_keyHash;
 
+  address shenAddress;
+
+  Shizo shizo;
   // Depends on the number of requested values that you want sent to the
   // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
   // so 100,000 is a safe default for this example contract. Test and adjust
@@ -71,6 +75,8 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     uint8 tier;
   }
 
+  mapping(uint8 => uint256) public tierToAmount;
+
   mapping(uint256 => TreasureChest) public treasureChests;
 
   event Spawned(uint256 indexed tokenId, int32 lat, int32 lon, uint8 t, uint8 tier);
@@ -89,12 +95,23 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
   constructor(
       address vrfCoordinator,
       bytes32 keyHash,
-      uint64 subscriptionId
+      uint64 subscriptionId,
+      address payable shizoAddress,
+      address shizoEnergyAddress
     ) VRFConsumerBaseV2(vrfCoordinator) ERC721('Shizo Treasure Chest', 'ShizoTreasureChest') {
     COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
     s_subscriptionId = subscriptionId; // https://vrf.chain.link/new .. 327
     s_keyHash = keyHash;
+    shizo = Shizo(shizoAddress);
+    shenAddress = shizoEnergyAddress;
+    
     owner = msg.sender;
+    
+    tierToAmount[1] = 1000 * 10 ** 18;
+    tierToAmount[2] = 2000 * 10 ** 18;
+    tierToAmount[3] = 5000 * 10 ** 18;
+    tierToAmount[4] = 10000 * 10 ** 18;
+    tierToAmount[5] = 30000 * 10 ** 18;
   }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
@@ -105,6 +122,12 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
       bytes(baseURI).length > 0
         ? string(abi.encodePacked(abi.encodePacked(baseURI, tokenId.toString()), '/metadata/'))
         : '';
+  }
+
+  // TODO test it
+  function setTierToAmount(uint8 tier, uint256 amount) external {
+    require(msg.sender == owner);
+    tierToAmount[tier] = amount;
   }
 
   // Assumes the subscription is funded sufficiently.
@@ -154,7 +177,7 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     treasureChests[nextTokenId.current()] = treasureChest;
     // console.log(2);
     // math.cos(30);
-    console.log(math.distance2(35740489, 51375246, 35726408, 51379295)); // this should be around 874720955971747546 (1.6 km)
+    // console.log(math.distance2(35740489, 51375246, 35726408, 51379295)); // this should be around 874720955971747546 (1.6 km)
     // console.log(uint64(math.sin(0)));
     // console.log(uint64(math.sin(30)));
     // console.log(uint64(math.sin(45)));
@@ -184,12 +207,24 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
 
   function mint(uint256 tokenId) public returns (uint256) {
     // static position check shavad
-
+  // (x * x * 874720955971747546) / (1600 * 1600) => x is threshold in meters
+  // 854219683566160
     
     require(!_exists(tokenId), 'token exists');
     require(tokenId < nextTokenId.current(), 'Token not spawned yet');
-
+    (int32 lat, int32 lon) = shizo.staticPositions(msg.sender);
+    uint256 dist = math.distance2(
+      lat,
+      lon,
+      treasureChests[tokenId].lat,
+      treasureChests[tokenId].lon
+    );
+    
+    require(dist < 854219683566160, "You're not close enough to the chest");
+    
     _safeMint(msg.sender, tokenId);
+
+    ERC20(shenAddress).transferFrom(owner, msg.sender, tierToAmount[treasureChests[tokenId].tier]);
 
     emit Claimed(
       msg.sender,

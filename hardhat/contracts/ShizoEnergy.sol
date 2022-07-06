@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import 'hardhat/console.sol';
 
-contract Cinergy is ERC20Burnable {
+contract ShizoEnergy is ERC20Burnable {
   using Strings for uint256;
   using Strings for uint8;
   using ECDSA for bytes32;
@@ -14,13 +14,12 @@ contract Cinergy is ERC20Burnable {
   mapping(bytes32 => bool) private _usedSignatures;
   address public owner;
 
-  constructor() ERC20('Cinergy', 'Cinergy') {
+  constructor() ERC20('Shizo Energy', 'SHEN') {
     owner = msg.sender;
-    _mint(msg.sender, 1000 * 10**super.decimals());
+    _mint(msg.sender, 10000000 * 10**super.decimals());
   }
 
   function claim(uint256 amount, bytes memory signature) external {
-    console.log("cinergy");
     bytes32 hashed = abi.encodePacked('cinergy:claim:', amount.toString()).toEthSignedMessageHash();
     require(_usedSignatures[hashed] == false, 'Signature already used');
 

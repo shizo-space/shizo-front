@@ -88,3 +88,9 @@ type Transit = {
   stepsCount: number
   t: number
 }
+
+type Chest = {
+  id: string
+  lat: number
+  lon: number
+}

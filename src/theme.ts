@@ -119,9 +119,13 @@ const theme = createTheme({
           backgroundColor: '#1FC780',
           borderRadius: 15,
           height: 60,
+          color: '#FFFFFF',
+          lineHeight: '22px',
+          fontSize: '22px',
           boxShadow: '0px 5px 15px rgba(31, 199, 128, 0.5), inset 0px -4px 0px 1px rgba(0, 0, 0, 0.1)',
           '&:hover': {
             backgroundColor: '#009E5C',
+            boxShadow: '0px 5px 15px rgba(31, 199, 128, 0.5), inset 0px -4px 0px 1px rgba(0, 0, 0, 0.1)',
           },
         },
         containedSecondary: {
@@ -129,8 +133,13 @@ const theme = createTheme({
           borderRadius: 15,
           height: 54,
           boxShadow: 'inset 0px -4px 0px 1px rgba(0, 0, 0, 0.1)',
+          fontWeight: 400,
+          lineHeight: '22px',
+          fontSize: '22px',
+          color: '#FFFFFF',
           '&:hover': {
             backgroundColor: '#0057FF',
+            boxShadow: 'inset 0px -4px 0px 1px rgba(0, 0, 0, 0.1)',
           },
         },
       },

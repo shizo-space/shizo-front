@@ -1,5 +1,6 @@
 // deploy/00_deploy_your_contract.js
 
+const { BigNumber } = require('ethers')
 const { ethers } = require('hardhat')
 const networkConfig = require('../hardhat.config')
 
@@ -30,28 +31,37 @@ module.exports = async ({ deployments, network, getChainId }) => {
   }
 
   const keyHash = networkConfig.networks[networkName].keyHash
-  const Cinergy = await deploy('Cinergy', {
+  const Shen = await deploy('ShizoEnergy', {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer.address,
+    log: true,
+  })
+
+  console.log(`SHEN ADDRESS: ${Shen.address}`)
+
+  const Shizo = await deploy('Shizo', {
+    from: deployer.address,
+    args: [Shen.address],
     log: true,
   })
 
   const Chest = await deploy('Chest', {
     from: deployer.address,
     log: true,
-    args: [vrfCoordinatorAddress, keyHash, subscriptionId],
+    args: [vrfCoordinatorAddress, keyHash, subscriptionId, Shizo.address, Shen.address],
   })
 
-  const Shizo = await deploy('Shizo', {
-    from: deployer.address,
-    args: [Cinergy.address],
-    log: true,
-  })
+  const ShenFactory = await ethers.getContractFactory('ShizoEnergy')
 
-  await verifyOnEtherscan(chainId, Cinergy, Shizo, Chest)
+  // Get signer information
+
+  const shenConsumer = new ethers.Contract(Shen.address, ShenFactory.interface, deployer)
+  await shenConsumer.approve(Chest.address, BigNumber.from(ethers.utils.parseEther('500000')))
+
+  await verifyOnEtherscan(chainId, Shen, Shizo, Chest)
 }
 
-async function verifyOnEtherscan(chainId, Cinergy, Shizo, Chest) {
+async function verifyOnEtherscan(chainId, Shen, Shizo, Chest) {
   if (chainId === 31337 || chainId === '31337') {
     return
   }
@@ -59,7 +69,7 @@ async function verifyOnEtherscan(chainId, Cinergy, Shizo, Chest) {
     console.log(' 🎫 Verifing Contract on Etherscan... ')
     await sleep(5000)
     await run('verify:verify', {
-      address: Cinergy.address,
+      address: Shen.address,
       contract: 'contracts/Cynergy.sol:Cynergy',
     })
   } catch (e) {
@@ -73,7 +83,7 @@ async function verifyOnEtherscan(chainId, Cinergy, Shizo, Chest) {
     await run('verify:verify', {
       address: Shizo.address,
       contract: 'contracts/Shizo.sol:',
-      constructorArguments: [Cinergy.address],
+      constructorArguments: [Shen.address],
     })
   } catch (e) {
     console.log(' ⚠️ Failed to verify contract on Etherscan ', e)

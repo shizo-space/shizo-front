@@ -30,6 +30,7 @@ import polyline from '@mapbox/polyline'
 import { directionApi } from '../utils/request'
 import { getSpawneds } from '../gql'
 import { EntityType } from '../enums'
+import Chest from './Chest'
 // import MapboxInspect from 'mapbox-gl-inspect'
 
 const useStyle = makeStyles({
@@ -171,6 +172,10 @@ export const Map = () => {
   const [name, setName] = useState('')
   const [editingLand, setEditingLand] = useState<any>(null)
   const [mergeId, setMergeId] = useState('')
+  const [showChestDialog, setShowChestDialog] = useState<boolean>(false)
+  const [selectedChest, setSelectedChest] = useState<Chest | null>(null)
+  const [playerPosition, setPlayerPosition] = useState<Position | null>(null)
+  const [playerDistanceFromChest, setPlayerDistanceFromChest] = useState<number | null>(null)
   const [entity, setEntity] = useState<any>(null)
   const [version, setVersion] = useState(0)
   const [checkInitialColorized, setCheckInitialColorized] = useState(false)
@@ -185,7 +190,7 @@ export const Map = () => {
   })
 
   const { data: chests } = useRequest<any, [void]>(() => getSpawneds(), {
-    pollingInterval: 5000,
+    pollingInterval: 2000,
     onSuccess: chests => {
       const source = mapRef.getSource('chests') as GeoJSONSource
       if (!source) {
@@ -247,7 +252,7 @@ export const Map = () => {
 
   const getPosition = async () => {
     let pos = null
-    const transit: Transit = await getActiveTransit()
+    const transit = await getActiveTransit()
     if (!transit || transit.departureTime == 0) {
       pos = await getUserStaticPosition()
       console.log(`static pos: ${JSON.stringify(pos)}`)
@@ -311,6 +316,9 @@ export const Map = () => {
 
   const { data: position } = useRequest<any, [void]>(() => getPosition(), {
     pollingInterval: 1000,
+    onSuccess: pos => {
+      setPlayerPosition(pos)
+    },
   })
 
   const { signMessage, signer } = useEvmWallet()
@@ -365,6 +373,29 @@ export const Map = () => {
     map.getCanvas().style.cursor = 'default'
     setMapRef(map)
   }, [version])
+
+  useEffect(() => {
+    if (selectedChest) {
+      console.log(
+        `distance: ${haversineDistance(
+          {
+            lat: selectedChest.lat,
+            lon: selectedChest.lon,
+          },
+          playerPosition,
+        )}`,
+      )
+      setPlayerDistanceFromChest(
+        haversineDistance(
+          {
+            lat: selectedChest.lat,
+            lon: selectedChest.lon,
+          },
+          playerPosition,
+        ),
+      )
+    }
+  }, [playerPosition])
 
   useEffect(() => {
     const map = mapRef
@@ -601,12 +632,18 @@ export const Map = () => {
         console.log(feature)
 
         if (feature.layer?.id === 'chests') {
-          setEntity({
+          // setEntity({
+          //   id: feature.properties?.tokenId,
+          //   lat: feature.properties?.lat,
+          //   lon: feature.properties?.lon,
+          //   type: EntityType.Chest,
+          // })
+          setSelectedChest({
             id: feature.properties?.tokenId,
             lat: feature.properties?.lat,
             lon: feature.properties?.lon,
-            type: EntityType.Chest,
           })
+          setShowChestDialog(true)
         } else {
           const mergeId = feature.properties?.merge_id
 
@@ -766,6 +803,15 @@ export const Map = () => {
       {/*  {isSignedIn ? 'Done' : 'Connect'}*/}
       {/*</Button>*/}
       <Dashboard />
+      {showChestDialog && (
+        <Chest
+          chest={selectedChest}
+          distanceFromPlayer={playerDistanceFromChest}
+          onClose={() => {
+            setShowChestDialog(false)
+          }}
+        />
+      )}
     </div>
   )
 }

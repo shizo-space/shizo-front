@@ -20,3 +20,18 @@ function getWriteContract(currentChain: SimpleChain, signer: ethers.Signer): eth
   return new ethers.Contract(cnt.address, cnt.abi, signer)
 }
 
+export async function mint(
+  tokenId: string,
+  address: string | null,
+  currentChain: SimpleChain,
+  signer: ethers.Signer,
+): Promise<void> {
+  if (!signer || !address || !currentChain) {
+    return
+  }
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    await contract.mint(tokenId)
+  }
+  return NodeWorker.async(service)
+}

@@ -631,15 +631,8 @@ task('request-random-words', 'Request a random word')
 
     const chestConsumer = new ethers.Contract(contractAddr, Chest.interface, signer)
     const trx = await chestConsumer.requestRandomWords(37747709, 37753569, -122454813, -122446553, 0, 0, 1, 5)
-    console.log(
-      'Contract ',
-      contractAddr,
-      ' random number request successfully called. Transaction Hash: ',
-      trx.hash,
-    )
-    const res = await trx.wait()
-    console.log(trx)
-    console.log(res)
+
+    await trx.wait()
 
     const trx2 = await chestConsumer.fulfillRandomWordsTest(1, [
       Math.floor(Math.random() * 37751024143945),
@@ -647,9 +640,7 @@ task('request-random-words', 'Request a random word')
       Math.floor(Math.random() * 16),
       Math.floor(Math.random() * 16),
     ])
-    const res2 = await trx2.wait()
-    console.log(trx2)
-    console.log(res2)
+    await trx2.wait()
 
     console.log('Run the following to read the returned random number:')
     console.log('yarn hardhat read-random-number --contract ' + contractAddr + ' --network ' + network.name)
