@@ -82,7 +82,7 @@ contract Shizo is ERC721 {
   }
 
   mapping(uint256 => uint256) public mintedTokenIds;
-  uint256 mintedTokenIdsCount;
+  uint256 public mintedTokenIdsCount;
   mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
