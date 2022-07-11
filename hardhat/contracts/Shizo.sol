@@ -304,6 +304,19 @@ contract Shizo is ERC721 {
     }
   }
 
+  function readLastRoadblockStatuses(uint256[] memory tokenIds) public view returns (bool[] memory) {
+    bool[] memory result = new bool[](tokenIds.length);
+    for (uint i = 0; i < tokenIds.length; i++) {
+      uint256 propsCount = roadBlockStorage[tokenIds[i]].propsCount;
+      if (propsCount > 0) {
+        result[i] = roadBlockStorage[tokenIds[i]].props[roadBlockStorage[tokenIds[i]].lastPropIndex].isBlock;
+      } else {
+        result[i] = false;
+      }
+    }
+    return result;
+  }
+
   // TODO should consume cinergy to do this action
   // TODO steps should be a custom polyline for checking signatures
   // TODO use encode instead of encodePacked
