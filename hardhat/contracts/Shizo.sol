@@ -81,6 +81,8 @@ contract Shizo is ERC721 {
     mapping(uint => RoadBlockProps) props; // TODO ouside of the struct
   }
 
+  mapping(uint256 => uint256) public mintedTokenIds;
+  uint256 mintedTokenIdsCount;
   mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
@@ -188,6 +190,9 @@ contract Shizo is ERC721 {
     _safeMint(msg.sender, tokenId);
     entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
     teleportsProps[tokenId] = TeleportProps(300, 0);
+
+    mintedTokenIds[mintedTokenIdsCount] = tokenId;
+    mintedTokenIdsCount++;
 
     TokenOnMarketplace memory tmp;
     tmp.listing = false;
