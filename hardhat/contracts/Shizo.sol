@@ -81,8 +81,8 @@ contract Shizo is ERC721 {
     mapping(uint => RoadBlockProps) props; // TODO ouside of the struct
   }
 
-  mapping(uint256 => uint256) public mintedTokenIds;
-  uint256 public mintedTokenIdsCount;
+  mapping(uint64 => uint256) public mintedTokenIds;
+  uint64 public mintedTokenIdsCount;
   mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
