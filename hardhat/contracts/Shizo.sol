@@ -19,16 +19,25 @@ contract Shizo is ERC721 {
 
   uint256 MAX_INT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
-  uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
+  // uint256 public constant PRICE = 1000000000000000; // 0.001 MATIC
   uint256 public constant ROYALITY = 5; // 5%
 
   uint8 public constant WALK_SPEED = 5;
   uint8 public constant BIKE_SPEED = 10;
   uint8 public constant TAXI_SPEED = 25;
+  
+  uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
+
+	uint8 public constant RARITY_COMMON = 0;
+	uint8 public constant RARITY_UNCOMMON = 1; 
+	uint8 public constant RARITY_RARE = 2;
+	uint8 public constant RARITY_EPIC = 3;
+	uint8 public constant RARITY_LEGENDARY = 4;
 
   mapping(uint8 => uint256) shenConsumption; 
 
-  uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
+  mapping(uint8 => uint256) shenRequiredForMint;
+  mapping(uint8 => uint256) maticRequiredForMint;
 
   address linkTokenAddress = 0xa36085F69e2889c224210F603D836748e7dC0088;
   address oracleAddress = 0x74EcC8Bdeb76F2C6760eD2dc8A46ca5e581fA656;
@@ -102,6 +111,18 @@ contract Shizo is ERC721 {
     shenConsumption[0] = 1 * (10 ** decimals) / 1000;
     shenConsumption[1] = 3 * (10 ** decimals) / 1000;
     shenConsumption[2] = 10 * (10 ** decimals) / 1000;
+
+	shenRequiredForMint[RARITY_COMMON] = 10 * (10 ** decimals);
+	shenRequiredForMint[RARITY_UNCOMMON] = 20 * (10 ** decimals);
+	shenRequiredForMint[RARITY_RARE] = 50 * (10 ** decimals);
+	shenRequiredForMint[RARITY_EPIC] = 100 * (10 ** decimals);
+	shenRequiredForMint[RARITY_LEGENDARY] = 1000 * (10 ** decimals);
+
+	maticRequiredForMint[RARITY_COMMON] = 1 * (10 ** decimals);
+	maticRequiredForMint[RARITY_UNCOMMON] = 2 * (10 ** decimals);
+	maticRequiredForMint[RARITY_RARE] = 5 * (10 ** decimals);
+	maticRequiredForMint[RARITY_EPIC] = 10 * (10 ** decimals);
+	maticRequiredForMint[RARITY_LEGENDARY] = 100 * (10 ** decimals);
   }
 
   function toString(int32 value) internal pure returns (string memory) {
@@ -156,6 +177,48 @@ contract Shizo is ERC721 {
     return entities[tokenId].t == 1;
   }
 
+  function mintByShen(
+    uint256 tokenId,
+    uint8 _type, // 0: Land, 1: Road
+    uint8 rarity,
+    int32 lat,
+    int32 lon,
+    bytes memory signature
+  ) public payable returns (uint256) {
+    require(!_exists(tokenId), 'token exists');
+	ERC20(shenAddress).transferFrom(msg.sender, address(this), shenRequiredForMint[rarity]);
+
+    // TODO delete abi.encode .. use padding of strings
+    // bytes memory hashed = abi.encode(
+    //   'shizo:mint:',
+    //   tokenId,
+    //   ',',
+    //   _type,
+    //   ',',
+    //   rarity,
+    //   ',',
+    //   lat,
+    //   ',',
+    //   lon
+    // );
+
+    // address signer = hashed.toEthSignedMessageHash().recover(signature);
+    // require(owner == signer, 'Invalid signature');
+
+    _safeMint(msg.sender, tokenId);
+    entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
+    teleportsProps[tokenId] = TeleportProps(300, 0);
+
+    TokenOnMarketplace memory tmp;
+    tmp.listing = false;
+    tmp.price = MAX_INT;
+    tmp.publisher = _msgSender();
+
+    marketplace[tokenId] = tmp;
+
+    return tokenId;
+  }
+
   // TODO add padding to vars
   function mint(
     uint256 tokenId,
@@ -165,7 +228,7 @@ contract Shizo is ERC721 {
     int32 lon,
     bytes memory signature
   ) public payable returns (uint256) {
-    require(msg.value == PRICE, 'Price is not correct');
+    require(msg.value == maticRequiredForMint[rarity], 'Price is not correct');
     require(!_exists(tokenId), 'token exists');
 
     // TODO delete abi.encode .. use padding of strings

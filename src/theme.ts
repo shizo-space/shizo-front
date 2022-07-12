@@ -1,6 +1,6 @@
 import { createTheme } from '@mui/material/styles'
 
-const fontName = 'Baloo Tamma 2'
+const fontName = '"Baloo Tamma 2"'
 
 const theme = createTheme({
   palette: {

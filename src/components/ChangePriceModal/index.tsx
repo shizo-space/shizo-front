@@ -9,6 +9,7 @@ import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProv
 import { useRequest } from 'ahooks'
 import { setPrice } from '../../contract-clients/shizoContract.client'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
+import { BigNumber, ethers } from 'ethers'
 const useStyle = makeStyles({
   root: {
     position: 'fixed',
@@ -53,17 +54,17 @@ const useStyle = makeStyles({
 
 type ChangePriceProps = {
   mergeId: string | null
-  currentPrice: string | null
+  currentPrice: BigNumber | null
   onClose: () => void
 }
 
 const ChangePriceModal: FC<ChangePriceProps> = ({ mergeId, currentPrice, onClose, ...rest }) => {
   const classes = useStyle()
-  const [newPrice, setNewPrice] = useState<string>(currentPrice)
+  const [newPrice, setNewPrice] = useState<string>(ethers.utils.formatEther(currentPrice))
   const { currentChain } = useEvmProvider()
   const { signer } = useEvmWallet()
 
-  const { run: changePrice } = useRequest<void, [string]>(
+  const { runAsync: changePrice } = useRequest<void, [string]>(
     newPrice => setPrice(mergeId, newPrice, currentChain, signer),
     {
       manual: true,
@@ -122,7 +123,7 @@ const ChangePriceModal: FC<ChangePriceProps> = ({ mergeId, currentPrice, onClose
                 Current price is
               </Typography>
               <Typography fontSize={14} fontWeight={600}>
-                {`${currentPrice} ${currentChain?.baseToken?.symbol}`}
+                {`${ethers.utils.formatEther(currentPrice)} ${currentChain?.baseToken?.symbol}`}
               </Typography>
             </Box>
           ) : (

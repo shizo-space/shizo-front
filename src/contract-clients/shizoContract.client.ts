@@ -1,9 +1,6 @@
-import { useRequest } from 'ahooks'
 import { BigNumber, ethers } from 'ethers'
 import Contracts from '../contracts/hardhat_contracts.json'
 import NodeWorker from '../adaptors/evm-provider-adaptor/NodeWorker'
-import useEvmProvider from '../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
-import useEvmWallet from '../adaptors/evm-wallet-adaptor/useEvmWallet'
 
 function getCnt(currentChain: SimpleChain) {
   const { chainId, chainName } = currentChain
@@ -46,6 +43,34 @@ export async function mint(
       {
         value: ethers.utils.parseEther('0.001'),
       },
+    )
+  }
+  return NodeWorker.async(service)
+}
+
+export async function mintByShen(
+  mergeId: string,
+  type: number,
+  rarity: number,
+  lat: number,
+  lon: number,
+  signature: string,
+  address: string | null,
+  currentChain: SimpleChain,
+  signer: ethers.Signer,
+): Promise<void> {
+  if (!signer || !address || !currentChain) {
+    return
+  }
+  const contract = getWriteContract(currentChain, signer)
+  const service = async function () {
+    await contract.mintByShen(
+      mergeId,
+      type,
+      rarity,
+      Math.floor(lat * 10 ** 6),
+      Math.floor(lon * 10 ** 6),
+      Buffer.from(signature),
     )
   }
   return NodeWorker.async(service)

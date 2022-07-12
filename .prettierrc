@@ -8,6 +8,6 @@
   "requirePragma": false,
   "proseWrap": "preserve",
   "arrowParens": "avoid",
-  "tabWidth": 2,
+  "tabWidth": 4,
   "useTabs": false
 }
