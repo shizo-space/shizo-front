@@ -28,7 +28,7 @@ services:
     volumes:
       - ./data/ipfs:/data/ipfs
   postgres:
-    image: postgres
+    image: postgres:14.4-alpine
     expose:
       - '5432'
     command: ['postgres', '-cshared_preload_libraries=pg_stat_statements']

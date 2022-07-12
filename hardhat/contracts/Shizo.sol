@@ -26,6 +26,14 @@ contract Shizo is ERC721 {
   uint8 public constant BIKE_SPEED = 10;
   uint8 public constant TAXI_SPEED = 25;
 
+  uint8 public constant ROAD_BLOCKED = 0;
+  uint8 public constant ROAD_UNBLOCKED = 1;
+  uint8 public constant ROAD_ONEWAY_POS = 2;
+  uint8 public constant ROAD_ONEWAY_NEG = 3;
+
+  uint8 public constant COLOR_NULL = 0;
+  uint8 public constant COLOR_RED = 1;
+
   mapping(uint8 => uint256) shenConsumption; 
 
   uint public constant MAX_DELTA_TIME = 24 * 3600; //max deltaTime for a transit
@@ -48,6 +56,8 @@ contract Shizo is ERC721 {
     uint8 t;
     uint8 level;
     uint8 rarity;
+    uint8 customColor;
+    string customName;
     Position pos;
   }
 
@@ -89,6 +99,8 @@ contract Shizo is ERC721 {
   mapping(address => Position) public staticPositions;
   mapping(address => TransitStorage) public transits;
 
+  event RoadLimitationChanged(address indexed owner, uint256 indexed tokenId, uint8 blockStatus);
+  event EntityChanged(address indexed changer, uint256 tokenId, Entity entity);
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
   event LevelUp(address indexed owner, uint256 indexed land, uint256 level);
 
@@ -188,7 +200,8 @@ contract Shizo is ERC721 {
     // require(owner == signer, 'Invalid signature');
 
     _safeMint(msg.sender, tokenId);
-    entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
+    entities[tokenId] = Entity(_type, 1, rarity, COLOR_NULL, "", Position(lat, lon));
+    emit EntityChanged(msg.sender, tokenId, entities[tokenId]);
     teleportsProps[tokenId] = TeleportProps(300, 0);
 
     mintedTokenIds[mintedTokenIdsCount] = tokenId;
@@ -257,6 +270,7 @@ contract Shizo is ERC721 {
 
     ERC20Burnable(shenAddress).burnFrom(msg.sender, shenRequired);
     entities[tokenId].level += 1;
+    emit EntityChanged(msg.sender, tokenId, entities[tokenId]);
 
     emit LevelUp(ownerOf(tokenId), tokenId, entities[tokenId].level);
   }
@@ -302,6 +316,8 @@ contract Shizo is ERC721 {
       roadBlockStorage[tokenId].props[propsCount - 1].modifiedTime = currentTime;
       roadBlockStorage[tokenId].props[propsCount - 1].isBlock = isBlock;
     }
+
+    emit RoadLimitationChanged(ownerOf(tokenId), tokenId, isBlock ? ROAD_BLOCKED : ROAD_UNBLOCKED);
   }
 
   function readLastRoadblockStatuses(uint256[] memory tokenIds) public view returns (bool[] memory) {

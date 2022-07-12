@@ -6,7 +6,7 @@ dataSources:
     name: Chest
     network: chert
     source:
-      address: '${CONTRACT}'
+      address: "${CHEST_CONTRACT}"
       abi: Chest
     mapping:
       kind: ethereum/events
@@ -21,3 +21,28 @@ dataSources:
         - event: Spawned(indexed uint256,int32,int32,uint8,uint8)
           handler: handleSpawned
       file: ./src/chest.ts
+  - kind: ethereum
+    name: Shizo
+    network: chert
+    source:
+      address: "${SHIZO_CONTRACT}"
+      abi: Shizo
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - EntityChanged
+        - RoadLimitationChanged
+      abis:
+        - name: Shizo
+          file: ./abis/Shizo.json
+      eventHandlers:
+        - event: EntityChanged(indexed
+            address,uint256,(uint8,uint8,uint8,uint8,string,(int32,int32)))
+          handler: handleEntityChanged
+        - event: RoadLimitationChanged(indexed address,indexed uint256,uint8)
+          handler: handleRoadLimitationChanged
+      file: ./src/shizo.ts
+
+
