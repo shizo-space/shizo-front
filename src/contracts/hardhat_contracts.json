@@ -1960,7 +1960,7 @@
       "chainId": "31337",
       "contracts": {
         "VRFCoordinatorV2Mock": {
-          "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+          "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
           "abi": [
             {
               "inputs": [
@@ -2413,7 +2413,7 @@
           ]
         },
         "ShizoEnergy": {
-          "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+          "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
           "abi": [
             {
               "inputs": [],
@@ -2755,7 +2755,7 @@
           ]
         },
         "Shizo": {
-          "address": "0xc6e7DF5E7b4f2A278906862b61205850344D4e7d",
+          "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
           "abi": [
             {
               "inputs": [
@@ -2835,6 +2835,75 @@
                 {
                   "indexed": true,
                   "internalType": "address",
+                  "name": "changer",
+                  "type": "address"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint8",
+                      "name": "t",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "uint8",
+                      "name": "level",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "uint8",
+                      "name": "rarity",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "uint8",
+                      "name": "customColor",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "customName",
+                      "type": "string"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "int32",
+                          "name": "lat",
+                          "type": "int32"
+                        },
+                        {
+                          "internalType": "int32",
+                          "name": "lon",
+                          "type": "int32"
+                        }
+                      ],
+                      "internalType": "struct Shizo.Position",
+                      "name": "pos",
+                      "type": "tuple"
+                    }
+                  ],
+                  "indexed": false,
+                  "internalType": "struct Shizo.Entity",
+                  "name": "entity",
+                  "type": "tuple"
+                }
+              ],
+              "name": "EntityChanged",
+              "type": "event"
+            },
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": true,
+                  "internalType": "address",
                   "name": "owner",
                   "type": "address"
                 },
@@ -2891,6 +2960,31 @@
                 {
                   "indexed": true,
                   "internalType": "address",
+                  "name": "owner",
+                  "type": "address"
+                },
+                {
+                  "indexed": true,
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "uint8",
+                  "name": "blockStatus",
+                  "type": "uint8"
+                }
+              ],
+              "name": "RoadLimitationChanged",
+              "type": "event"
+            },
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": true,
+                  "internalType": "address",
                   "name": "from",
                   "type": "address"
                 },
@@ -2917,6 +3011,32 @@
             {
               "inputs": [],
               "name": "BIKE_SPEED",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "COLOR_NULL",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "COLOR_RED",
               "outputs": [
                 {
                   "internalType": "uint8",
@@ -2995,6 +3115,58 @@
             {
               "inputs": [],
               "name": "RARITY_UNCOMMON",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "ROAD_BLOCKED",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "ROAD_ONEWAY_NEG",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "ROAD_ONEWAY_POS",
+              "outputs": [
+                {
+                  "internalType": "uint8",
+                  "name": "",
+                  "type": "uint8"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "ROAD_UNBLOCKED",
               "outputs": [
                 {
                   "internalType": "uint8",
@@ -3137,6 +3309,16 @@
                   "internalType": "uint8",
                   "name": "rarity",
                   "type": "uint8"
+                },
+                {
+                  "internalType": "uint8",
+                  "name": "customColor",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "string",
+                  "name": "customName",
+                  "type": "string"
                 },
                 {
                   "components": [
@@ -3461,6 +3643,38 @@
               "type": "function"
             },
             {
+              "inputs": [
+                {
+                  "internalType": "uint64",
+                  "name": "",
+                  "type": "uint64"
+                }
+              ],
+              "name": "mintedTokenIds",
+              "outputs": [
+                {
+                  "internalType": "uint256",
+                  "name": "",
+                  "type": "uint256"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
+              "inputs": [],
+              "name": "mintedTokenIdsCount",
+              "outputs": [
+                {
+                  "internalType": "uint64",
+                  "name": "",
+                  "type": "uint64"
+                }
+              ],
+              "stateMutability": "view",
+              "type": "function"
+            },
+            {
               "inputs": [],
               "name": "name",
               "outputs": [
@@ -3516,6 +3730,25 @@
               "name": "purchase",
               "outputs": [],
               "stateMutability": "payable",
+              "type": "function"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "uint256[]",
+                  "name": "tokenIds",
+                  "type": "uint256[]"
+                }
+              ],
+              "name": "readLastRoadblockStatuses",
+              "outputs": [
+                {
+                  "internalType": "bool[]",
+                  "name": "",
+                  "type": "bool[]"
+                }
+              ],
+              "stateMutability": "view",
               "type": "function"
             },
             {
@@ -3872,7 +4105,7 @@
           ]
         },
         "Chest": {
-          "address": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+          "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
           "abi": [
             {
               "inputs": [

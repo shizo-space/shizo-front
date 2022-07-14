@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { utils } = require('ethers')
+const { utils, BigNumber } = require('ethers')
 const fs = require('fs')
 const chalk = require('chalk')
 
@@ -554,7 +554,7 @@ task('mint', 'Mint an item')
   .addOptionalParam('to', 'To address or account index')
   .setAction(async (taskArgs, { ethers }) => {
     const { deployer } = await getNamedAccounts()
-    const Metagate = await ethers.getContract('Metagate', deployer)
+    const Shizo = await ethers.getContract('Shizo', deployer)
 
     const from = await addr(ethers, taskArgs.from)
     debug(`Normalized from address: ${from}`)
@@ -569,9 +569,8 @@ task('mint', 'Mint an item')
       debug(`to is not provided, using from address as to: ${to}`)
     }
 
-    const contract = Metagate.connect(fromSigner)
-
-    const tx = await contract.mint(to, taskArgs.tokenId, { value: ethers.utils.parseEther('1.0') })
+    const contract = Shizo.connect(fromSigner)
+    const tx = await contract.mint(BigNumber.from(taskArgs.tokenId), 1, 0, 12,13, Buffer.from('gsgsg'), { value: ethers.utils.parseEther('0.001') })
     console.log(tx)
   })
 
@@ -582,34 +581,68 @@ task('list', 'List an item')
   .setAction(async (taskArgs, { ethers }) => {
     const { deployer } = await getNamedAccounts()
 
-    const Metagate = await ethers.getContract('Metagate', deployer)
+    const Shizo = await ethers.getContract('Shizo', deployer)
 
     const from = await addr(ethers, taskArgs.from)
     debug(`Normalized from address: ${from}`)
     const fromSigner = await ethers.provider.getSigner(from)
-    const contract = Metagate.connect(fromSigner)
+    const contract = Shizo.connect(fromSigner)
 
-    const tx = await contract.listOnMarketplace(taskArgs.tokenId, ethers.utils.parseEther(taskArgs.price))
+    const tx = await contract.listOnMarketplace(BigNumber.from(taskArgs.tokenId), ethers.utils.parseEther(taskArgs.price))
     console.log(tx)
   })
 
 task('purchase', 'Purchase an item')
-  .addPositionalParam('buyer', 'From address or account index')
-  .addPositionalParam('tokenId', 'The TokenId of the item to purchase')
-  .addPositionalParam('price', 'The price of the item')
+  .addParam('buyer', 'From address or account index')
+  .addParam('tokenid', 'The TokenId of the item to purchase')
+  .addParam('price', 'The price of the item')
   .setAction(async (taskArgs, { ethers }) => {
     const { deployer } = await getNamedAccounts()
 
-    const Metagate = await ethers.getContract('Metagate', deployer)
+    const Metagate = await ethers.getContract('Shizo', deployer)
 
     const buyer = await addr(ethers, taskArgs.buyer)
     debug(`Normalized from address: ${buyer}`)
     const buyerSigner = await ethers.provider.getSigner(buyer)
     const contract = Metagate.connect(buyerSigner)
 
-    const tx = await contract.purchase(taskArgs.tokenId, { value: ethers.utils.parseEther(taskArgs.price) })
+    console.log(BigNumber.from(256))
+    const tx = await contract.purchase(BigNumber.from(taskArgs.tokenid), { value: ethers.utils.parseEther('0.001') })
     console.log(tx)
   })
+
+task('block-road', 'blocks a road')
+  .addParam('tokenid', 'The TokenId of the item to block')
+  .setAction(async (taskArgs, { ethers }) => {
+    const { deployer } = await getNamedAccounts()
+
+    const Shizo = await ethers.getContract('Shizo', deployer)
+
+    const accounts = await ethers.getSigners()
+    const signer = accounts[0]
+    const contract = Shizo.connect(signer)
+
+    console.log(BigNumber.from(256))
+    const tx = await contract.changeRoadLimitations(BigNumber.from(taskArgs.tokenid), true);
+    console.log(tx)
+  })
+
+task('unblock-road', 'blocks a road')
+  .addParam('tokenid', 'The TokenId of the item to block')
+  .setAction(async (taskArgs, { ethers }) => {
+    const { deployer } = await getNamedAccounts()
+
+    const Shizo = await ethers.getContract('Shizo', deployer)
+
+    const accounts = await ethers.getSigners()
+    const signer = accounts[0]
+    const contract = Shizo.connect(signer)
+
+    console.log(BigNumber.from(256))
+    const tx = await contract.changeRoadLimitations(BigNumber.from(taskArgs.tokenid), false);
+    console.log(tx)
+  })
+
 
 task('request-random-words', 'Request a random word')
   .addParam('contract', 'The address of the API Consumer contract that you want to call')

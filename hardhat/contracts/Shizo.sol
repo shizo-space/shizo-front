@@ -34,6 +34,14 @@ contract Shizo is ERC721 {
 	uint8 public constant RARITY_EPIC = 3;
 	uint8 public constant RARITY_LEGENDARY = 4;
 
+  uint8 public constant ROAD_BLOCKED = 0;
+  uint8 public constant ROAD_UNBLOCKED = 1;
+  uint8 public constant ROAD_ONEWAY_POS = 2;
+  uint8 public constant ROAD_ONEWAY_NEG = 3;
+
+  uint8 public constant COLOR_NULL = 0;
+  uint8 public constant COLOR_RED = 1;
+
   mapping(uint8 => uint256) shenConsumption; 
 
   mapping(uint8 => uint256) shenRequiredForMint;
@@ -57,6 +65,8 @@ contract Shizo is ERC721 {
     uint8 t;
     uint8 level;
     uint8 rarity;
+    uint8 customColor;
+    string customName;
     Position pos;
   }
 
@@ -90,12 +100,16 @@ contract Shizo is ERC721 {
     mapping(uint => RoadBlockProps) props; // TODO ouside of the struct
   }
 
+  mapping(uint64 => uint256) public mintedTokenIds;
+  uint64 public mintedTokenIdsCount;
   mapping(uint256 => TeleportProps) public teleportsProps;
   mapping(uint256 => Entity) public entities;
   mapping(uint256 => RoadBlockStorage) public roadBlockStorage;
   mapping(address => Position) public staticPositions;
   mapping(address => TransitStorage) public transits;
 
+  event RoadLimitationChanged(address indexed owner, uint256 indexed tokenId, uint8 blockStatus);
+  event EntityChanged(address indexed changer, uint256 tokenId, Entity entity);
   event Purchase(address indexed seller, address indexed buyer, uint256 indexed tokenId, uint256 price);
   event LevelUp(address indexed owner, uint256 indexed land, uint256 level);
 
@@ -206,7 +220,8 @@ contract Shizo is ERC721 {
     // require(owner == signer, 'Invalid signature');
 
     _safeMint(msg.sender, tokenId);
-    entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
+    entities[tokenId] = Entity(_type, 1, rarity, COLOR_NULL, "", Position(lat, lon));
+    // emit EntityChanged(msg.sender, tokenId, entities[tokenId]);
     teleportsProps[tokenId] = TeleportProps(300, 0);
 
     TokenOnMarketplace memory tmp;
@@ -249,8 +264,12 @@ contract Shizo is ERC721 {
     // require(owner == signer, 'Invalid signature');
 
     _safeMint(msg.sender, tokenId);
-    entities[tokenId] = Entity(_type, 1, rarity, Position(lat, lon));
+    entities[tokenId] = Entity(_type, 1, rarity, COLOR_NULL, "", Position(lat, lon));
+    // emit EntityChanged(msg.sender, tokenId, entities[tokenId]);
     teleportsProps[tokenId] = TeleportProps(300, 0);
+
+    mintedTokenIds[mintedTokenIdsCount] = tokenId;
+    mintedTokenIdsCount++;
 
     TokenOnMarketplace memory tmp;
     tmp.listing = false;
@@ -315,6 +334,7 @@ contract Shizo is ERC721 {
 
     ERC20Burnable(shenAddress).burnFrom(msg.sender, shenRequired);
     entities[tokenId].level += 1;
+    // emit EntityChanged(msg.sender, tokenId, entities[tokenId]);
 
     emit LevelUp(ownerOf(tokenId), tokenId, entities[tokenId].level);
   }
@@ -360,6 +380,21 @@ contract Shizo is ERC721 {
       roadBlockStorage[tokenId].props[propsCount - 1].modifiedTime = currentTime;
       roadBlockStorage[tokenId].props[propsCount - 1].isBlock = isBlock;
     }
+
+    emit RoadLimitationChanged(ownerOf(tokenId), tokenId, isBlock ? ROAD_BLOCKED : ROAD_UNBLOCKED);
+  }
+
+  function readLastRoadblockStatuses(uint256[] memory tokenIds) public view returns (bool[] memory) {
+    bool[] memory result = new bool[](tokenIds.length);
+    for (uint i = 0; i < tokenIds.length; i++) {
+      uint256 propsCount = roadBlockStorage[tokenIds[i]].propsCount;
+      if (propsCount > 0) {
+        result[i] = roadBlockStorage[tokenIds[i]].props[roadBlockStorage[tokenIds[i]].lastPropIndex].isBlock;
+      } else {
+        result[i] = false;
+      }
+    }
+    return result;
   }
 
   // TODO should consume cinergy to do this action

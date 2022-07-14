@@ -6,3 +6,23 @@ type Spawned @entity {
   t: Int!
   tier: Int!
 }
+
+type EntityChanged @entity {
+  id: ID!
+  changer: Bytes! # address
+  tokenId: BigInt! # uint256
+  entity_t: Int! # uint8
+  entity_level: Int! # uint8
+  entity_rarity: Int! # uint8
+  entity_customColor: Int! # uint8
+  entity_customName: String! # string
+  entity_pos_lat: Int! # int32
+  entity_pos_lon: Int! # int32
+}
+
+type RoadLimitationChanged @entity {
+  id: ID!
+  owner: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockStatus: Int! # uint8
+}
