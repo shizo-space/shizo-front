@@ -200,7 +200,7 @@ contract Shizo is ERC721 {
     bytes memory signature
   ) public payable returns (uint256) {
     require(!_exists(tokenId), 'token exists');
-	ERC20(shenAddress).transferFrom(msg.sender, address(this), shenRequiredForMint[rarity]);
+	  ERC20(shenAddress).transferFrom(msg.sender, address(this), shenRequiredForMint[rarity]);
 
     // TODO delete abi.encode .. use padding of strings
     // bytes memory hashed = abi.encode(
@@ -514,15 +514,6 @@ contract Shizo is ERC721 {
 
   function cancelTransit() external {
     require(transits[msg.sender].departureTime != 0, 'No active transit');
-    (uint32 distance, uint lastStepIndex) = getDistanceTraversed(msg.sender);
-    uint256 shenRequired = shenConsumption[transits[msg.sender].t] * distance;
-    console.log(shenRequired);
-    console.log(IERC20(shenAddress).balanceOf(msg.sender));
-    require(IERC20(shenAddress).balanceOf(msg.sender) >= shenRequired, 'Not enough SHEN');
-    ERC20(shenAddress).transfer(owner, shenRequired);
-
-    staticPositions[msg.sender].lat = transits[msg.sender].steps[lastStepIndex].lat;
-    staticPositions[msg.sender].lon = transits[msg.sender].steps[lastStepIndex].lon;
 
     transits[msg.sender].departureTime = 0;
     transits[msg.sender].stepsCount = 0;

@@ -280,6 +280,11 @@ export const Map = () => {
             }
         }
 
+		if(!mapRef) {
+			console.log('mapRef is undefined')
+			return
+		}
+
         if (!pos) {
             console.log('pos is undefined')
             return
