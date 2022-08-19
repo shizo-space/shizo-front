@@ -102,10 +102,11 @@ type EntityProps = {
     playerPosition: any
     onFocus: (data) => void
     onEdit: (data) => void
+	onNavigate: (data) => void
     onRoute: (polyline) => void
 }
 
-const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdit, onRoute }) => {
+const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdit, onNavigate, onRoute }) => {
     const classes = useStyle()
     const [showTooltip, setShowTooltip] = useState<boolean>(false)
     const [showChart, setShowChart] = useState<boolean>(false)
@@ -472,7 +473,7 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
                                     {playerPosition && (
                                         <CustomIconButton
                                             size='medium'
-                                            onClick={() => navigate()}
+                                            onClick={() => onNavigate(data)}
                                             color='secondary'
                                         >
                                             <SvgIcon

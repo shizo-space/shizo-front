@@ -15,8 +15,8 @@ import ListItemIcon from '@mui/material/ListItemIcon'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
 import useTokenBalance from '../../adaptors/evm-provider-adaptor/hooks/useTokenBalance'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
-import Avatar from 'boring-avatars'
 import { shortenAddress } from '../../utils'
+import { Avatar } from '@mui/material'
 
 const useStyle = makeStyles({
 	root: {
@@ -99,7 +99,19 @@ const Dashboard: FC = ({ }) => {
 	return (
 		<>
 			<Box className={classes.root}>
-				{!isWalletConnectedToSite &&
+				{isWalletConnectedToSite ?
+					<Box sx={{
+						display: 'flex',
+						flexDirection: 'row',
+						justiyContent: 'center',
+						alignItems: 'center'
+					}}>
+						<Avatar sx={{ margin: 0.5, width: 50, height: 50 }} src="https://shizo.space/static/icons/Avatar3.png" />
+						<Typography fontWeight={700} fontSize={20} sx={{ margin: 0.5 }}>
+							{shortenAddress(activeWalletAddress)}
+						</Typography>
+					</Box>
+					:
 					<Button
 						fullWidth
 						color="secondary"
@@ -146,10 +158,11 @@ const Dashboard: FC = ({ }) => {
 						>
 							<SvgIcon component={Polygon} />
 						</Box>
-						<Box sx={{
-							marginX: 0.5,
-							color: '#000000'
-						}}>
+						<Box
+							sx={{
+								marginX: 0.5,
+								color: '#000000'
+							}}>
 							Polygon
 						</Box>
 					</Box>
