@@ -122,9 +122,9 @@ contract Shizo is ERC721 {
     owner = msg.sender;
 
     uint8 decimals = ERC20(shenAddress).decimals();
-    shenConsumption[0] = 1 * (10 ** decimals) / 1000;
-    shenConsumption[1] = 3 * (10 ** decimals) / 1000;
-    shenConsumption[2] = 10 * (10 ** decimals) / 1000;
+    shenConsumption[0] = 1 * (10 ** decimals);
+    shenConsumption[1] = 3 * (10 ** decimals);
+    shenConsumption[2] = 10 * (10 ** decimals);
 
 	shenRequiredForMint[RARITY_COMMON] = 10 * (10 ** decimals);
 	shenRequiredForMint[RARITY_UNCOMMON] = 20 * (10 ** decimals);

@@ -10,6 +10,14 @@ export SHIZO_CONTRACT=$(cat cont.txt | grep '"Shizo"' | cut -d ' ' -f 7)
 npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
 npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
 npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
+npx hardhat request-random-words --contract $CHEST_CONTRACT --network localhost
 
 npx hardhat send --amount 10 --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --to 0xc0880c939d9561962405ACfF07aa83F9b55ABa30 --network localhost
 

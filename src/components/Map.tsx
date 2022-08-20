@@ -26,6 +26,7 @@ import { EntityType } from '../enums'
 import Chest from './Chest'
 import { Rarity } from '../constants'
 import Navigation from './Navigation'
+import Ride from './Ride'
 
 const useStyle = makeStyles({
 	panel: {
@@ -169,6 +170,9 @@ export const Map = () => {
 	const [editingLand, setEditingLand] = useState<any>(null)
 	const [navigation, setNavigation] = useState<any>(null)
 	const [mergeId, setMergeId] = useState('')
+	const [transit, setTransit] = useState<any>(null)
+	const [totalDistance, setTotalDistance] = useState<number>(null)
+	const [distanceTraversed, setDistanceTraversed] = useState<number>(null)
 	const [showChestDialog, setShowChestDialog] = useState<boolean>(false)
 	const [selectedChest, setSelectedChest] = useState<Chest | null>(null)
 	const [playerPosition, setPlayerPosition] = useState<Position | null>(null)
@@ -245,11 +249,10 @@ export const Map = () => {
 		},
 	)
 
-	const { runAsync: cancelTransit } = useRequest<void, [void]>(() => cancelTransit())
-
 	const getPosition = async () => {
 		let pos = null
 		const transit = await getActiveTransit()
+		setTransit(transit)
 		if (!transit || transit.departureTime == 0) {
 			pos = await getUserStaticPosition()
 			console.log(`static pos: ${JSON.stringify(pos)}`)
@@ -258,6 +261,7 @@ export const Map = () => {
 			console.log(steps)
 			const [distance, _] = await getDistance()
 			console.log(`distance: ${distance}`)
+			setDistanceTraversed(distance)
 
 			let path = null
 			try {
@@ -266,6 +270,7 @@ export const Map = () => {
 						walletAddress: activeWalletAddress,
 					},
 				})
+				setTotalDistance(data?.distance)
 				path = data?.path
 			} catch (e) {
 				console.error(e)
@@ -790,7 +795,7 @@ export const Map = () => {
 					<>
 						{
 							navigation ?
-								<Navigation />
+								<Navigation onRoute={polyline => showRoute(polyline)} destLat={entity.lat} destLon={entity.lon} playerPosition={playerPosition} />
 								:
 								editingLand ? (
 									<EditEntity
@@ -828,6 +833,7 @@ export const Map = () => {
 					}}
 				/>
 			)}
+			{transit && transit.departureTime != 0 ? <Ride transit={transit} distanceTraversed={distanceTraversed} totalDistance={totalDistance} /> : null}
 		</div>
 	)
 }

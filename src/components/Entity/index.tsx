@@ -22,7 +22,6 @@ import { ReactComponent as MaticIcon } from '../../assets/MaticIcon.svg'
 
 import ChangePriceModal from '../ChangePriceModal'
 import OpenExternalWebsiteDialog from '../OpenExternalWebsiteDialog'
-import { directionApi } from '../../utils/request'
 import { Paper } from '@mui/material'
 
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
@@ -32,9 +31,6 @@ import {
     getMarketDetails,
     purchase,
     teleport,
-    startTransit,
-    cancelTransit,
-    finishTransit,
     mintByShen,
 } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
@@ -114,7 +110,6 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
     const [showChangePriceModal, setShowChangePriceModal] = useState<boolean>(false)
     const [ownerAddress, setOwnerAddress] = useState<string | null>(null)
     const [shenBalance, setShenBalance] = useState<BigNumber>(ethers.utils.parseEther('0'))
-    const [steps, setSteps] = useState<any>(null)
     const [purchases, setPurchases] = useState(null)
     const [mintData, setMintData] = useState(null)
     const [price, setPrice] = useState<BigNumber | null>(null)
@@ -167,64 +162,12 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
         },
     )
 
-    const { runAsync: transitBegin } = useRequest<void, [number]>(
-        transitType => startTransit(transitType, steps, currentChain, signer),
-        {
-            manual: true,
-        },
-    )
-
-    const { runAsync: cancelActiveTransit } = useRequest<void, [void]>(
-        () => cancelTransit(currentChain, signer),
-        {
-            manual: true,
-        },
-    )
-
-    const { runAsync: finishActiveTransit } = useRequest<void, [void]>(() => approveAndFinishTransit(), {
-        manual: true,
-    })
-
     const { run: teleportToLand } = useRequest<void, [string]>(
         mergeId => teleport(mergeId, currentChain, signer),
         {
             manual: true,
         },
     )
-
-    async function checkAllowanceAndApprove() {
-        const allowanceAmount = await allowance(activeWalletAddress, currentChain, provider)
-        if (allowanceAmount.toHexString() !== MAX_ALLOWANCE_AMOUNT) {
-            await approve(BigNumber.from(MAX_ALLOWANCE_AMOUNT), currentChain, signer)
-        }
-    }
-
-    async function approveAndFinishTransit() {
-        await checkAllowanceAndApprove()
-        await finishTransit(currentChain, signer)
-    }
-
-    async function navigate() {
-        if (!data) {
-            console.error('entity is undefined')
-            return
-        }
-        console.log('HERE')
-        const res = await directionApi.get('/routes', {
-            params: {
-                srcLat: playerPosition.lat,
-                srcLong: playerPosition.lon,
-                dstLat: data.lat,
-                dstLong: data.lon,
-                vehicle: 'car',
-                searchMethod: 'fastest',
-                walletAddress: activeWalletAddress,
-            },
-        })
-        console.log(res)
-        onRoute(res?.data?.polyline_path)
-        setSteps(res?.data?.route?.steps)
-    }
 
     const { loading: ownerAddressLoading } = useRequest<string, [string]>(
         () => getOwnerOf(data?.id, currentChain, provider),
@@ -338,6 +281,13 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
         setTimeout(() => {
             handleCloseTooltip()
         }, 800)
+    }
+
+    async function checkAllowanceAndApprove() {
+        const allowanceAmount = await allowance(activeWalletAddress, currentChain, provider)
+        if (allowanceAmount.toHexString() !== MAX_ALLOWANCE_AMOUNT) {
+            await approve(BigNumber.from(MAX_ALLOWANCE_AMOUNT), currentChain, signer)
+        }
     }
 
     const handleMint = async () => {
@@ -483,27 +433,6 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
                                             />
                                         </CustomIconButton>
                                     )}
-                                    <CustomIconButton
-                                        size='medium'
-                                        onClick={() => transitBegin(0)}
-                                        color='secondary'
-                                    >
-                                        <SvgIcon component={PolygonIcon} viewBox='0 0 24 24' />
-                                    </CustomIconButton>
-                                    <CustomIconButton
-                                        size='medium'
-                                        onClick={() => cancelActiveTransit()}
-                                        color='secondary'
-                                    >
-                                        <SvgIcon component={CloseIcon} viewBox='0 0 18 18' />
-                                    </CustomIconButton>
-                                    <CustomIconButton
-                                        size='medium'
-                                        onClick={() => finishActiveTransit()}
-                                        color='secondary'
-                                    >
-                                        <SvgIcon component={TaxiIcon} viewBox='0 0 24 24' />
-                                    </CustomIconButton>
                                 </Box>
                             )}
                             {/* 

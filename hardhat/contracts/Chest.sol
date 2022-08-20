@@ -176,18 +176,6 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     );
     
     treasureChests[nextTokenId.current()] = treasureChest;
-    // console.log(2);
-    // math.cos(30);
-    // console.log(math.distance2(35740489, 51375246, 35726408, 51379295)); // this should be around 874720955971747546 (1.6 km)
-    // console.log(uint64(math.sin(0)));
-    // console.log(uint64(math.sin(30)));
-    // console.log(uint64(math.sin(45)));
-    // console.log(uint64(math.sin(60)));
-    // console.log(uint64(math.sin(90)));
-
-    // console.log(uint(res));
-    // console.log(math.getNegativeUint());
-    // console.log(math.getNegativeUintPower());
     
     emit Spawned(
       nextTokenId.current(),
@@ -207,9 +195,9 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
   }
 
   function mint(uint256 tokenId) public returns (uint256) {
-    // static position check shavad
-  // (x * x * 874720955971747546) / (1600 * 1600) => x is threshold in meters
-  // 854219683566160
+    // static position
+	// (x * x * 874720955971747546) / (1600 * 1600) => x is threshold in meters
+	// 854219683566160
     
     require(!_exists(tokenId), 'token exists');
     require(tokenId < nextTokenId.current(), 'Token not spawned yet');

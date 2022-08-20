@@ -44,9 +44,7 @@ const useStyle = makeStyles({
         paddingRight: 10,
         paddingLeft: 10,
         marginTop: 10,
-        // gap: 5,
-        // order: 1,
-        // flexGrow: 0,
+		flexShrink: 0,
     },
     otherPropertiesSection: {
         display: 'flex',

@@ -156,7 +156,7 @@ const Dashboard: FC = ({ }) => {
 						<Box
 							sx={{ marginX: 0.5 }}
 						>
-							<SvgIcon component={Polygon} />
+							<SvgIcon component={Polygon} inheritViewBox />
 						</Box>
 						<Box
 							sx={{

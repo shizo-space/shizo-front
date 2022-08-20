@@ -663,7 +663,8 @@ task('request-random-words', 'Request a random word')
     const signer = accounts[0]
 
     const chestConsumer = new ethers.Contract(contractAddr, Chest.interface, signer)
-    const trx = await chestConsumer.requestRandomWords(37747709, 37753569, -122454813, -122446553, 0, 0, 1, 5)
+    // const trx = await chestConsumer.requestRandomWords(37747709, 37753569, -122454813, -122446553, 0, 0, 1, 5)
+    const trx = await chestConsumer.requestRandomWords(37725466, 37785663, -122491441, -122394757, 0, 0, 1, 5)
 
     await trx.wait()
 

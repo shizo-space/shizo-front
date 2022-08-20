@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import styled from "@mui/system/styled";
@@ -13,6 +13,11 @@ import arrow_left from '../../assets/arrow-left-button.png';
 import Button from '@mui/material/Button'
 import { makeStyles } from '@mui/styles';
 import ItemSummarySegment from '../ItemSummarySegment';
+import { directionApi } from '../../utils/request'
+import { useRequest } from 'ahooks';
+import { startTransit } from '../../contract-clients/shizoContract.client';
+import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider';
+import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet';
 
 
 const useStyle = makeStyles((theme: any) => ({
@@ -87,7 +92,7 @@ const RideOptionValue: FC<{
 			}} >
 				<RideValueIcon src={icon} />
 				<Box sx={{ display: 'flex', direction: 'column' }} >
-					<Typography fontSize={20} fontWeight={500} lineHeight="15px">{value}</Typography>
+					<Typography fontSize={20} fontWeight={500} lineHeight="15px" sx={{mr: 0.5}}>{value}</Typography>
 					<Typography fontSize={10} fontWeight={400} lineHeight="12px">{label}</Typography>
 				</Box>
 			</Box>
@@ -128,8 +133,8 @@ const RideOption: FC<{
 					<RideOptionIcon src={icon} />
 				</Box>
 				<Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: 'repeat( auto-fit, minmax(80px, 1fr))', gridGap: 10 }}>
-					<RideOptionValue icon={blue_value_icon} value={blueValue} label="CINERGY" />
-					<RideOptionValue icon={orange_value_icon} value={orangeValue} label="CINERGY" />
+					<RideOptionValue icon={blue_value_icon} value={blueValue} label="SHEN" />
+					<RideOptionValue icon={orange_value_icon} value={orangeValue} label="SHEN" />
 					<RideOptionValue icon={green_value_icon} value={greenValue} label="Min" />
 				</Box>
 			</Box>
@@ -138,13 +143,56 @@ const RideOption: FC<{
 type NavigationProps = {
 	onBack?: () => void,
 	onStart?: (optionId: string | number) => void,
+	onRoute: (polyline) => void,
+	playerPosition: any,
+	destLat: number,
+	destLon: number,
 }
-const Navigation: FC<NavigationProps> = ({ onBack, onStart }) => {
+const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, destLon, playerPosition }) => {
 	const classes = useStyle()
 	const [selectedOption, setSelectedOption] = useState<string | number>('WALK');
+	const [steps, setSteps] = useState<any>(null)
+	const { defaultProvider: provider, currentChain } = useEvmProvider()
+	const { activeWalletAddress, signer } = useEvmWallet()
 	const handleChangeOption = (id: string | number) => {
 		setSelectedOption(id)
 	}
+
+
+	const { run: getRoute, data: route } = useRequest<any, [void]>(
+		() => directionApi.get('/routes', {
+			params: {
+				srcLat: playerPosition.lat,
+				srcLong: playerPosition.lon,
+				dstLat: destLat,
+				dstLong: destLon,
+				vehicle: 'car',
+				searchMethod: 'fastest',
+				walletAddress: activeWalletAddress,
+			}
+		}),
+		{
+			manual: true,
+			onSuccess: (res) => {
+				console.log('<<<<<<<<<<>>>>>>>>>>>>>>>>')
+				console.log(res)
+				onRoute(res?.data?.polyline_path)
+				setSteps(res?.data?.route?.steps)
+			}
+		}
+	)
+
+	const { runAsync: transitBegin } = useRequest<void, [number]>(
+		transitType => startTransit(transitType, steps, currentChain, signer),
+		{
+			manual: true,
+		},
+	)
+
+	useEffect(() => {
+		getRoute()
+	}, [destLat, destLon])
+
 	return (
 		<Box className={classes.root}>
 			<Box className={classes.content}>
@@ -200,7 +248,7 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart }) => {
 					<Button
 						variant="contained"
 						color="primary"
-						onClick={onBack}
+						onClick={() => transitBegin(0)}
 						sx={{
 							flexGrow: 1, height: 60, display: 'flex', justifyContent: 'center', alignItems: 'center',
 							backgroundColor: '#2D9AFF', borderRadius: 4, boxShadow: '0px 5px 15px rgba(45, 154, 255, 0.5), inset 0px -4px 0px rgba(0, 0, 0, 0.1)',

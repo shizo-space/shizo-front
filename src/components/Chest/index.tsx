@@ -1,11 +1,12 @@
 import React, { FC } from 'react'
 import Dialog from '@mui/material/Dialog'
 import DialogContent from '@mui/material/DialogContent'
-import { Box, Button } from '@mui/material'
+import { Box, Button, Typography } from '@mui/material'
 import { makeStyles } from '@mui/styles'
 import { mint } from '../../contract-clients/chestContract.client'
 import { useRequest } from 'ahooks'
 import ChestIcon from '../../assets/Chest.png'
+import ChestOpenIcon from '../../assets/chest-open.png'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
 
@@ -54,12 +55,13 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 				onClose={onClose}
 				{...rest}
 			>
-				<DialogContent>
+				<DialogContent sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
 					<Box>
-						<img src={ChestIcon} />
+						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', mb: 12 }}>
+							<img src={ChestOpenIcon} />
+						</Box>
 
 						<Button
-							sx={{ mb: 2 }}
 							variant="contained"
 							color="secondary"
 							fullWidth
@@ -68,7 +70,7 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 								claimChest()
 							}}
 						>
-							Open Chest
+							Claim Rewards
 						</Button>
 					</Box>
 				</DialogContent>
@@ -82,9 +84,19 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 				onClose={onClose}
 				{...rest}
 			>
-				<DialogContent>
-					<Box>
-						<img src={ChestIcon} />
+				<DialogContent sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+						<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', mb: 15 }}>
+							<img src={ChestIcon} />
+						</Box>
+
+						<Typography
+							fontWeight={400}
+							fontSize={16}
+							align='center'
+							sx={{mb: 5}}
+						>
+							You're not close enough to claim this chest
+						</Typography>
 
 						<Button
 							sx={{
@@ -104,7 +116,6 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 						>
 							Navigate
 						</Button>
-					</Box>
 				</DialogContent>
 			</Dialog>
 		)
