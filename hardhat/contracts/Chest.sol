@@ -108,11 +108,11 @@ contract Chest is ERC721, VRFConsumerBaseV2 {
     owner = msg.sender;
     
     uint8 decimals = ERC20(shenAddress).decimals();
-    tierToAmount[1] = 1000 * 10 ** decimals;
-    tierToAmount[2] = 2000 * 10 ** decimals;
-    tierToAmount[3] = 5000 * 10 ** decimals;
-    tierToAmount[4] = 10000 * 10 ** decimals;
-    tierToAmount[5] = 30000 * 10 ** decimals;
+    tierToAmount[1] = 200 * 10 ** decimals;
+    tierToAmount[2] = 500 * 10 ** decimals;
+    tierToAmount[3] = 1000 * 10 ** decimals;
+    tierToAmount[4] = 2000 * 10 ** decimals;
+    tierToAmount[5] = 4000 * 10 ** decimals;
   }
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {

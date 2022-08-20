@@ -131,7 +131,7 @@ const theme = createTheme({
 				containedSecondary: {
 					backgroundColor: '#2D9AFF',
 					borderRadius: 15,
-					height: 54,
+					height: 60,
 					boxShadow: '0px 5px 15px rgba(45, 154, 255, 0.5), inset 0px -4px 0px 1px rgba(0, 0, 0, 0.1)',
 					fontWeight: 400,
 					lineHeight: '22px',

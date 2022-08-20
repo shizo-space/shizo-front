@@ -126,11 +126,11 @@ contract Shizo is ERC721 {
     shenConsumption[1] = 3 * (10 ** decimals);
     shenConsumption[2] = 10 * (10 ** decimals);
 
-	shenRequiredForMint[RARITY_COMMON] = 10 * (10 ** decimals);
-	shenRequiredForMint[RARITY_UNCOMMON] = 20 * (10 ** decimals);
-	shenRequiredForMint[RARITY_RARE] = 50 * (10 ** decimals);
-	shenRequiredForMint[RARITY_EPIC] = 100 * (10 ** decimals);
-	shenRequiredForMint[RARITY_LEGENDARY] = 1000 * (10 ** decimals);
+	shenRequiredForMint[RARITY_COMMON] = 100 * (10 ** decimals);
+	shenRequiredForMint[RARITY_UNCOMMON] = 200 * (10 ** decimals);
+	shenRequiredForMint[RARITY_RARE] = 500 * (10 ** decimals);
+	shenRequiredForMint[RARITY_EPIC] = 1000 * (10 ** decimals);
+	shenRequiredForMint[RARITY_LEGENDARY] = 10000 * (10 ** decimals);
 
 	maticRequiredForMint[RARITY_COMMON] = 1 * (10 ** decimals);
 	maticRequiredForMint[RARITY_UNCOMMON] = 2 * (10 ** decimals);

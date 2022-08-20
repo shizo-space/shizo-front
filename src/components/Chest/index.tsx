@@ -38,12 +38,18 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 	const { defaultProvider: provider, currentChain } = useEvmProvider()
 	const { activeWalletAddress, signer } = useEvmWallet()
 
+
 	const { run: claimChest } = useRequest<void, [void]>(
 		() => mint(chest.id, activeWalletAddress, currentChain, signer),
 		{
 			manual: true,
 		},
 	)
+
+	const handleClickClaimChest = async () => {
+		await claimChest()
+		onClose()
+	}
 
 	const finalDialog =
 		distanceFromPlayer < 50 ? (
@@ -67,7 +73,7 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 							fullWidth
 							size="large"
 							onClick={() => {
-								claimChest()
+								handleClickClaimChest()
 							}}
 						>
 							Claim Rewards

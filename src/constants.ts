@@ -9,11 +9,11 @@ export const Rarity = {
 }
 
 export const ShenRequiredForMint = {	
-	[Rarity.Common]: ethers.utils.parseEther('10'),
-	[Rarity.Uncommon]: ethers.utils.parseEther('20'),
-	[Rarity.Rare]: ethers.utils.parseEther('50'),
-	[Rarity.Epic]: ethers.utils.parseEther('100'),
-	[Rarity.Legendary]: ethers.utils.parseEther('1000'),
+	[Rarity.Common]: ethers.utils.parseEther('100'),
+	[Rarity.Uncommon]: ethers.utils.parseEther('200'),
+	[Rarity.Rare]: ethers.utils.parseEther('500'),
+	[Rarity.Epic]: ethers.utils.parseEther('1000'),
+	[Rarity.Legendary]: ethers.utils.parseEther('10000'),
 }
 
 export const MaticRequiredForMint = {	

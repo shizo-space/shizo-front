@@ -13,7 +13,7 @@ const useStyle = makeStyles((theme: any) => ({
     position: 'fixed',
     top: 0,
     left: 0,
-    width: 375,
+    width: 400,
     height: '100vh',
     paddingTop: 128,
     backgroundColor: theme?.palette?.mode === 'dark' ? 'rgba(11, 18, 22, 0.95)' : '#FFF',
@@ -143,10 +143,6 @@ const EditEntity: FC<EditEntityProps> = ({ data, onCancel, onSave }) => {
           </Box>
           <OutlinedInput
             value={fields.name}
-            style={{
-              background:
-                'linear-gradient(243.83deg, rgba(94, 190, 221, 0.2) 25.02%, rgba(107, 220, 198, 0.2) 62.79%)',
-            }}
             fullWidth
             onChange={e => {
               handleChangeField('name', e.target.value)
@@ -161,10 +157,6 @@ const EditEntity: FC<EditEntityProps> = ({ data, onCancel, onSave }) => {
             <OutlinedInput
               value={fields.description}
               className={classes.textarea}
-              style={{
-                background:
-                  'linear-gradient(243.83deg, rgba(94, 190, 221, 0.2) 25.02%, rgba(107, 220, 198, 0.2) 62.79%)',
-              }}
               onChange={e => {
                 handleChangeField('description', e.target.value)
               }}
@@ -177,34 +169,11 @@ const EditEntity: FC<EditEntityProps> = ({ data, onCancel, onSave }) => {
           <Box>
             <Box sx={{ mb: 0.5, mt: 1 }}>
               <Typography fontWeight={400} fontSize={12} lineHeight="18px" color={'#949494'}>
-                Theta Video Link
-              </Typography>
-            </Box>
-            <OutlinedInput
-              value={fields.embeddedLink}
-              style={{
-                background:
-                  'linear-gradient(243.83deg, rgba(94, 190, 221, 0.2) 25.02%, rgba(107, 220, 198, 0.2) 62.79%)',
-              }}
-              onChange={e => {
-                handleChangeField('embeddedLink', e.target.value)
-              }}
-              fullWidth
-            />
-          </Box>
-
-          <Box>
-            <Box sx={{ mb: 0.5, mt: 1 }}>
-              <Typography fontWeight={400} fontSize={12} lineHeight="18px" color={'#949494'}>
                 External Link
               </Typography>
             </Box>
             <OutlinedInput
               value={fields.externalLink}
-              style={{
-                background:
-                  'linear-gradient(243.83deg, rgba(94, 190, 221, 0.2) 25.02%, rgba(107, 220, 198, 0.2) 62.79%)',
-              }}
               onChange={e => {
                 handleChangeField('externalLink', e.target.value)
               }}
@@ -246,15 +215,15 @@ const EditEntity: FC<EditEntityProps> = ({ data, onCancel, onSave }) => {
           <Button
             sx={{ mb: 2 }}
             variant="contained"
+						color="primary"
             fullWidth
             size="large"
             style={{
-              background: 'linear-gradient(243.83deg, #5EBEDD 25.02%, #6BDCC6 62.79%)',
               fontWeight: 700,
             }}
             onClick={() => onSave(fields)}
           >
-            Save Changes
+            Save
           </Button>
           <Button variant="outlined" fullWidth size="large" color="error" onClick={onCancel}>
             Cancel

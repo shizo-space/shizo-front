@@ -529,7 +529,7 @@ export const Map = () => {
 					'line-cap': 'round',
 				},
 				paint: {
-					'line-color': '#888',
+					'line-color': '#642DFF',
 					'line-width': 8,
 				},
 			})
@@ -657,6 +657,8 @@ export const Map = () => {
 					setName(feature.properties?.name ?? '')
 					setRarity(feature.properties['shizo:rarity'] ?? Rarity.Common)
 					setMergeId(mergeId ?? '')
+					setNavigation(null)
+					clearRoute()
 					setEditingLand(null)
 					colorize(mergeId)
 					fetchEntity(mergeId, false, lngLat, null, true)
@@ -722,6 +724,19 @@ export const Map = () => {
 
 	const handleClickNavigation = data => {
 		setNavigation(data)
+	}
+
+
+	const clearRoute = () => {
+		const source = mapRef.getSource('route') as GeoJSONSource
+		source.setData({
+			type: 'Feature',
+			properties: {},
+			geometry: {
+				type: 'LineString',
+				coordinates: []
+			}
+		})
 	}
 
 	const showRoute = pline => {
