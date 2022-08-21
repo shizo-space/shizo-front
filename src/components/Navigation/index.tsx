@@ -19,6 +19,13 @@ import { startTransit } from '../../contract-clients/shizoContract.client';
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider';
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet';
 
+const speeds = [5, 10, 25]
+
+const shenConsumption = [
+	0.5,
+	1.5,
+	5
+]
 
 const useStyle = makeStyles((theme: any) => ({
 	root: {
@@ -133,7 +140,7 @@ const RideOption: FC<{
 					<RideOptionIcon src={icon} />
 				</Box>
 				<Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: 'repeat( auto-fit, minmax(80px, 1fr))', gridGap: 10 }}>
-					<RideOptionValue icon={blue_value_icon} value={blueValue} label="SHEN" />
+					<RideOptionValue icon={blue_value_icon} value={blueValue} label="" />
 					<RideOptionValue icon={orange_value_icon} value={orangeValue} label="SHEN" />
 					<RideOptionValue icon={green_value_icon} value={greenValue} label="Min" />
 				</Box>
@@ -152,10 +159,22 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 	const classes = useStyle()
 	const [selectedOption, setSelectedOption] = useState<string | number>('WALK');
 	const [steps, setSteps] = useState<any>(null)
+	const [distance, setDistance] = useState<any>(null)
 	const { defaultProvider: provider, currentChain } = useEvmProvider()
 	const { activeWalletAddress, signer } = useEvmWallet()
 	const handleChangeOption = (id: string | number) => {
 		setSelectedOption(id)
+	}
+
+	const calcEta = (type) => {
+		const etaInSec = distance / speeds[type]
+		return Math.round(etaInSec / 6) / 10
+	}
+	const calcTollAmount = (type) => {
+		return 0
+	}
+	const calcTotalBurned = (type) => {
+		return distance * shenConsumption[type]
 	}
 
 
@@ -176,6 +195,7 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 			onSuccess: (res) => {
 				console.log('<<<<<<<<<<>>>>>>>>>>>>>>>>')
 				console.log(res)
+				setDistance(Math.round(res?.data?.distance ?? 0 ))
 				onRoute(res?.data?.polyline_path)
 				setSteps(res?.data?.route?.steps)
 			}
@@ -211,21 +231,21 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 					>
 						<DistanceIcon src={distance_png} />
 						<Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-							<Typography fontSize={35} fontWeight={700} lineHeight="35px">1450</Typography>
+							<Typography fontSize={35} fontWeight={700} lineHeight="35px">{distance}</Typography>
 							<Typography fontSize={20} fontWeight={400} lineHeight="20px">m</Typography>
 						</Box>
 					</Box>
 					<RideOption
-						id='WALK' icon={walk_icon} blueValue={30} orangeValue={12}
-						greenValue={20} selectedId={selectedOption} onSelect={handleChangeOption}
+						id='WALK' icon={walk_icon} blueValue={calcTotalBurned(0)} orangeValue={0}
+						greenValue={calcEta(0)} selectedId={selectedOption} onSelect={handleChangeOption}
 					/>
 					<RideOption
-						id='BIKE' icon={bike_icon} blueValue={30} orangeValue={12}
-						greenValue={20} selectedId={selectedOption} onSelect={handleChangeOption}
+						id='BIKE' icon={bike_icon} blueValue={calcTotalBurned(1)} orangeValue={0}
+						greenValue={calcEta(1)} selectedId={selectedOption} onSelect={handleChangeOption}
 					/>
 					<RideOption
-						id='TAXI' icon={taxi_icon} blueValue={30} orangeValue={12}
-						greenValue={20} selectedId={selectedOption} onSelect={handleChangeOption}
+						id='TAXI' icon={taxi_icon} blueValue={calcTotalBurned(2)} orangeValue={0}
+						greenValue={calcEta(2)} selectedId={selectedOption} onSelect={handleChangeOption}
 					/>
 				</Box>
 				<Box sx={{ width: 1, display: 'flex', alignItems: 'center' }} >

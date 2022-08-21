@@ -13,6 +13,7 @@ import Dashboard from './Dashboard'
 import EditEntity from './EditEntity'
 import {
 	getDistanceTraversed,
+	getEntityProps,
 	getStaticPosition,
 	getTransit,
 	getTransitSteps,
@@ -27,6 +28,7 @@ import Chest from './Chest'
 import { Rarity } from '../constants'
 import Navigation from './Navigation'
 import Ride from './Ride'
+import UpgradeDialog from './UpgradeDialog'
 
 const useStyle = makeStyles({
 	panel: {
@@ -54,7 +56,7 @@ maplibregl.setRTLTextPlugin(
 )
 
 async function getEntity(id: string | number): Promise<any> {
-	const { data } = await axios.get(`https://map.metagate.land/features/${id}`)
+	const { data } = await axios.get(`https://shizo.space/features/${id}`)
 	console.log(data)
 	return {
 		id,
@@ -168,6 +170,7 @@ export const Map = () => {
 	const [name, setName] = useState<string>('')
 	const [rarity, setRarity] = useState<number>(Rarity.Common)
 	const [editingLand, setEditingLand] = useState<any>(null)
+	const [showUpgradeDialog, setShowUpgradeDialog] = useState<boolean>(false)
 	const [navigation, setNavigation] = useState<any>(null)
 	const [mergeId, setMergeId] = useState('')
 	const [transit, setTransit] = useState<any>(null)
@@ -178,12 +181,11 @@ export const Map = () => {
 	const [playerPosition, setPlayerPosition] = useState<Position | null>(null)
 	const [playerDistanceFromChest, setPlayerDistanceFromChest] = useState<number | null>(null)
 	const [entity, setEntity] = useState<any>(null)
+	const [entityChainProps, setEntityChainProps] = useState<any>(null)
 	const [version, setVersion] = useState(0)
 	const [checkInitialColorized, setCheckInitialColorized] = useState(false)
 	const [mapRef, setMapRef] = useState<MapType | null>(null)
 	const [viewport, setViewport] = useState<Viewport>({
-		// center: [-79.464537, 43.722474], // toronto
-		// center: [-122.009118, 37.331485], // california
 		center: { lng: -122.456754, lat: 37.754234 },
 		zoom: 14,
 		pitch: 0,
@@ -232,6 +234,18 @@ export const Map = () => {
 		() => getStaticPosition(activeWalletAddress, currentChain, provider),
 		{
 			manual: true,
+		},
+	)
+
+
+	const { runAsync: getEntityChainProps } = useRequest<any, [string]>(
+		(tokenId) => getEntityProps(tokenId, currentChain, provider),
+		{
+			manual: true,
+			onSuccess: (data) => {
+				console.log(data)
+				setEntityChainProps(data)
+			}
 		},
 	)
 
@@ -344,6 +358,10 @@ export const Map = () => {
 		},
 		[mapRef],
 	)
+
+	const colorizeBlockRoad = (mergeId) => {
+		mapRef.setFilter('block_roads', ['in', 'merge_id', mergeId])
+	}
 
 	const handleOnEditEntity = async fields => {
 		if (!entity.id) {
@@ -556,6 +574,27 @@ export const Map = () => {
 			})
 
 			map.addLayer({
+				id: 'block_roads',
+				type: 'line',
+				source: 'openmaptiles',
+				'source-layer': 'transportation',
+				filter: ['in', 'mergeid', ''],
+				layout: { 'line-cap': 'round', 'line-join': 'round' },
+				paint: {
+					'line-color': 'rgba(255, 48, 48, 0.5)',
+					// 'line-opacity': 0.75,
+					'line-width': {
+						base: 1.4,
+						stops: [
+							[6.5, 0],
+							[8, 0.5],
+							[20, 13],
+						],
+					},
+				},
+			})
+
+			map.addLayer({
 				id: 'building_highlight_3d',
 				type: 'fill-extrusion',
 				source: 'openmaptiles',
@@ -662,6 +701,7 @@ export const Map = () => {
 					setEditingLand(null)
 					colorize(mergeId)
 					fetchEntity(mergeId, false, lngLat, null, true)
+					getEntityChainProps(mergeId)
 					history.push(`/${mergeId}`)
 				}
 			})
@@ -722,10 +762,13 @@ export const Map = () => {
 		setEditingLand(data)
 	}
 
+	const handleClickUpgrade = () => {
+		setShowUpgradeDialog(true)
+	}
+
 	const handleClickNavigation = data => {
 		setNavigation(data)
 	}
-
 
 	const clearRoute = () => {
 		const source = mapRef.getSource('route') as GeoJSONSource
@@ -767,6 +810,7 @@ export const Map = () => {
 		setEditingLand(null)
 		colorize(data.id)
 		fetchEntity(data.id, true, null, null, data.animate)
+		getEntityChainProps(data.id)
 	}
 
 	const wait = (time: number): Promise<void> => {
@@ -782,6 +826,7 @@ export const Map = () => {
 			setMergeId(params.mergeId)
 			// colorize(params.mergeId)
 			fetchEntity(params.mergeId, true, null, 2500, true)
+			getEntityChainProps(params.mergeId)
 		} else {
 			setCheckInitialColorized(true)
 		}
@@ -823,12 +868,15 @@ export const Map = () => {
 								) : (
 									<Entity
 										data={entity}
+										chainProps={entityChainProps}
 										loading={fetchEntityLoading}
 										playerPosition={position}
 										onFocus={() => focusOnLand(entity, true)}
 										onEdit={data => handleClickEdit(data)}
+										onUpgrade={() => handleClickUpgrade()}
 										onNavigate={data => handleClickNavigation(data)}
 										onRoute={polyline => showRoute(polyline)}
+										onBlock={(data) => colorizeBlockRoad(data?.id)}
 									/>
 								)}
 					</>
@@ -849,6 +897,11 @@ export const Map = () => {
 				/>
 			)}
 			{transit && transit.departureTime != 0 ? <Ride transit={transit} distanceTraversed={distanceTraversed} totalDistance={totalDistance} /> : null}
+			{
+				showUpgradeDialog && (
+					<UpgradeDialog tokenId={entity.id} level={entityChainProps.level} onClose={() => { setShowUpgradeDialog(false) }} />
+				)
+			}
 		</div>
 	)
 }

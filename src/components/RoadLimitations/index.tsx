@@ -80,9 +80,9 @@ const RoadLimitations: FC<RoadLimitationsTypes> = ({ limitationType, onChangeLim
 				<Typography fontWeight={400} fontSize={16} lineHeight="16px" color="#808080">Toll amount</Typography>
 			</Box>
 			<Box sx={{ display: 'flex', width: 1, alignItems: 'center', mb: 3.75 }} >
-				<RoadCost icon={walk_icon} value={100} color="rgba(121, 137, 137, 0.1)" />
-				<RoadCost icon={bike_icon} value={120} color="rgba(19, 223, 125, 0.1)" />
-				<RoadCost icon={taxi_icon} value={120} color="rgba(255, 153, 0, 0.1)" />
+				<RoadCost icon={walk_icon} value={0} color="rgba(121, 137, 137, 0.1)" />
+				<RoadCost icon={bike_icon} value={0} color="rgba(19, 223, 125, 0.1)" />
+				<RoadCost icon={taxi_icon} value={0} color="rgba(255, 153, 0, 0.1)" />
 				<IconButton onClick={onEdit} sx={{ background: 'transparent', boxShadow: 'none', '&:hover': { background: 'transparent' } }}>
 					<EditIcon sx={{ color: '#8459FF', fontSize: '1.5rem' }} />
 				</IconButton>

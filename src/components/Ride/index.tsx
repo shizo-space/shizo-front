@@ -28,9 +28,9 @@ const MINIMUM_SHEN_REQUIRED = ethers.utils.parseEther('10')
 const speeds = [5, 10, 25]
 
 const shenConsumption = [
-	1,
-	3,
-	10
+	0.5,
+	1.5,
+	5
 ]
 
 const RideOptionIcon = styled('img')({

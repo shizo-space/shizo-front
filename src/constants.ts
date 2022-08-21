@@ -23,3 +23,11 @@ export const MaticRequiredForMint = {
 	[Rarity.Epic]: ethers.utils.parseEther('10'),
 	[Rarity.Legendary]: ethers.utils.parseEther('100'),
 }
+
+export const ShenRequiredForUpgrade = {	
+	1: ethers.utils.parseEther('25'),
+	2: ethers.utils.parseEther('50'),
+	3: ethers.utils.parseEther('100'),
+	4: ethers.utils.parseEther('250'),
+	5: ethers.utils.parseEther('500'),
+}

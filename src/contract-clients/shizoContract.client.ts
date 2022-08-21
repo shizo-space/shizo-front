@@ -1,7 +1,7 @@
 import { BigNumber, ethers } from 'ethers'
 import Contracts from '../contracts/hardhat_contracts.json'
 import NodeWorker from '../adaptors/evm-provider-adaptor/NodeWorker'
-import { MaticRequiredForMint } from '../constants'
+import { MaticRequiredForMint, ShenRequiredForUpgrade } from '../constants'
 
 function getCnt(currentChain: SimpleChain) {
 	const { chainId, chainName } = currentChain
@@ -73,6 +73,37 @@ export async function mintByShen(
 			Math.floor(lon * 10 ** 6),
 			Buffer.from(signature),
 		)
+	}
+	return NodeWorker.async(service)
+}
+
+export async function upgrade(
+	tokenId: string,
+	nextLevel: number,
+	currentChain: SimpleChain,
+	signer: ethers.Signer,
+): Promise<void> {
+	if (!signer || !currentChain || !nextLevel) {
+		return
+	}
+	const contract = getWriteContract(currentChain, signer)
+	const service = async function() {
+		await contract.upgrade(tokenId)
+	}
+	return NodeWorker.async(service)
+}
+
+export async function blockRoad(
+	tokenId: string,
+	currentChain: SimpleChain,
+	signer: ethers.Signer,
+): Promise<void> {
+	if (!signer || !currentChain) {
+		return
+	}
+	const contract = getWriteContract(currentChain, signer)
+	const service = async function() {
+		await contract.changeRoadLimitations(tokenId, true)
 	}
 	return NodeWorker.async(service)
 }
@@ -173,6 +204,22 @@ export async function getTransitSteps(
 	const contract = getReadContract(currentChain, provider)
 	const service = async function() {
 		return await contract.getTransitSteps(address)
+	}
+	return NodeWorker.async(service)
+}
+
+export async function getEntityProps(
+	tokenId: string,
+	currentChain: SimpleChain,
+	provider: ethers.providers.Provider,
+): Promise<any> {
+	if (!tokenId || !currentChain || !provider) {
+		return
+	}
+
+	const contract = getReadContract(currentChain, provider)
+	const service = async function() {
+		return await contract.entities(tokenId)
 	}
 	return NodeWorker.async(service)
 }

@@ -34,6 +34,7 @@ import {
 	purchase,
 	teleport,
 	mintByShen,
+	blockRoad,
 } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
@@ -97,20 +98,24 @@ const useStyle = makeStyles((theme: any) => ({
 
 type EntityProps = {
 	data: any
+	chainProps: any
 	loading: boolean
 	playerPosition: any
 	onFocus: (data) => void
 	onEdit: (data) => void
+	onUpgrade: (data) => void
 	onNavigate: (data) => void
 	onRoute: (polyline) => void
+	onBlock: (data) => void
 }
 
-const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdit, onNavigate, onRoute }) => {
+const Entity: FC<EntityProps> = ({ data, chainProps, loading, playerPosition, onFocus, onEdit, onUpgrade, onNavigate, onRoute, onBlock }) => {
 	const classes = useStyle()
 	const [showTooltip, setShowTooltip] = useState<boolean>(false)
 	const [showChart, setShowChart] = useState<boolean>(false)
 	const [showWebsiteDialog, setShowWebsiteDialog] = useState<boolean>(false)
 	const [showChangePriceModal, setShowChangePriceModal] = useState<boolean>(false)
+	const [limitationType, setLimitationType] = useState<"TWO_WAY" | "BLOCKED">("TWO_WAY")
 	const [ownerAddress, setOwnerAddress] = useState<string | null>(null)
 	const [shenBalance, setShenBalance] = useState<BigNumber>(ethers.utils.parseEther('0'))
 	const [purchases, setPurchases] = useState(null)
@@ -217,6 +222,14 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
 		},
 	)
 
+
+	const { runAsync: blockTheRoad } = useRequest<any, [void]>(
+		() => blockRoad(data?.id, currentChain, signer),
+		{
+			manual: true
+		}
+	)
+
 	// const { loading: purchasesLoading } = useRequest<any, [void]>(() => getPurchases(data?.id), {
 	//   onSuccess: res => {
 	//     console.log(res)
@@ -310,6 +323,12 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
 		await buy(data.id)
 	}
 
+	const onChangeRoadType = async () => {
+		await blockTheRoad()
+		setLimitationType("BLOCKED")
+		onBlock(data)
+	}
+
 	return (
 		<Box component={Paper} className={classes.root}>
 			<Box className={classes.content}>
@@ -321,7 +340,7 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
 				{!loading && data && (
 					<>
 						<Box className={classes.itemSummary}>
-							<ItemSummarySegment {...data} />
+							<ItemSummarySegment {...data} level={chainProps ? chainProps[1] : 1} />
 						</Box>
 						<Box className={classes.top}>
 							<Box className={classes.topInfo}>
@@ -391,11 +410,14 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
 									</Typography>
 								)}
 							</Box>
-							<Box sx={{mt: 4}}>
-								<Box sx={{ mb: 0.25 }}>
-									<RoadLimitations onEdit={() => { }} onChangeLimitationType={() => { }} limitationType="TWO_WAY" />
+							{
+								!data.isBuilding && isOwnerOfEntity &&
+								<Box sx={{ mt: 4 }}>
+									<Box sx={{ mb: 0.25 }}>
+										<RoadLimitations onEdit={() => { }} onChangeLimitationType={() => { onChangeRoadType() }} limitationType={limitationType} />
+									</Box>
 								</Box>
-							</Box>
+							}
 						</Box>
 						<Box>
 							{marketDetailsLoading ? (
@@ -517,7 +539,7 @@ const Entity: FC<EntityProps> = ({ data, loading, playerPosition, onFocus, onEdi
 											fontWeight: 700,
 										}}
 										onClick={() => {
-											onEdit(data)
+											onUpgrade(data)
 										}}
 									>
 										{ownerAddressLoading ? <Skeleton width={104} height={18} /> : (
