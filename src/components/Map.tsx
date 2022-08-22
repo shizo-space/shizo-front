@@ -891,6 +891,7 @@ export const Map = () => {
 				<Chest
 					chest={selectedChest}
 					distanceFromPlayer={playerDistanceFromChest}
+					onNavigate={data => handleClickNavigation(data)}
 					onClose={() => {
 						setShowChestDialog(false)
 					}}

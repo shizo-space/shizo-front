@@ -28,9 +28,9 @@ const MINIMUM_SHEN_REQUIRED = ethers.utils.parseEther('10')
 const speeds = [5, 10, 25]
 
 const shenConsumption = [
-	0.5,
-	1.5,
-	5
+	1 / 20,
+	3 / 20,
+	6 / 20,
 ]
 
 const RideOptionIcon = styled('img')({
@@ -103,7 +103,7 @@ const Ride: FC<RideProps> = ({ transit, totalDistance, distanceTraversed}) => {
     })
 
 	const calcEta = () => {
-		const distanceToBeTraversed = Math.min(Math.abs(totalDistance - distanceTraversed), 0)
+		const distanceToBeTraversed = Math.max(Math.abs(totalDistance - distanceTraversed), 0)
 		const etaInSec = distanceToBeTraversed / speeds[transit.t]
 		return Math.round(etaInSec / 6) / 10
 	}
@@ -111,7 +111,7 @@ const Ride: FC<RideProps> = ({ transit, totalDistance, distanceTraversed}) => {
 		return 0
 	}
 	const calcTotalBurned = () => {
-		return Math.round(Math.min(distanceTraversed, totalDistance)) * shenConsumption[transit.t]
+		return Math.round(Math.min(distanceTraversed, totalDistance) * shenConsumption[transit.t] * 100) / 100
 	}
 
 	return (

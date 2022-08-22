@@ -10,11 +10,6 @@ import ChestOpenIcon from '../../assets/chest-open.png'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
 import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet'
 
-type ChestProps = {
-	chest: Chest | null
-	distanceFromPlayer: number | null
-	onClose: () => void
-}
 
 const useStyles = makeStyles({
 	navigateDialog: {
@@ -33,13 +28,19 @@ const useStyles = makeStyles({
 	},
 })
 
-const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) => {
+type ChestProps = {
+	chest: Chest | null
+	distanceFromPlayer: number | null
+	onClose: () => void
+	onNavigate: (data) => void
+}
+
+const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, onNavigate, ...rest }) => {
 	const classes = useStyles()
 	const { defaultProvider: provider, currentChain } = useEvmProvider()
 	const { activeWalletAddress, signer } = useEvmWallet()
 
-
-	const { run: claimChest } = useRequest<void, [void]>(
+	const { runAsync: claimChest } = useRequest<void, [void]>(
 		() => mint(chest.id, activeWalletAddress, currentChain, signer),
 		{
 			manual: true,
@@ -117,7 +118,8 @@ const Chest: FC<ChestProps> = ({ chest, distanceFromPlayer, onClose, ...rest }) 
 							fullWidth
 							size="large"
 							onClick={() => {
-								claimChest()
+								onClose()
+								onNavigate(chest)
 							}}
 						>
 							Navigate

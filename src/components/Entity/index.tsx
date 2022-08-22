@@ -35,6 +35,7 @@ import {
 	teleport,
 	mintByShen,
 	blockRoad,
+	getTeleportProps,
 } from '../../contract-clients/shizoContract.client'
 import { useRequest } from 'ahooks'
 import useEvmProvider from '../../adaptors/evm-provider-adaptor/hooks/useEvmProvider'
@@ -175,6 +176,16 @@ const Entity: FC<EntityProps> = ({ data, chainProps, loading, playerPosition, on
 		{
 			manual: true,
 		},
+	)
+
+	const { data: teleportProps } = useRequest<any, [void]>(
+		() => getTeleportProps(data?.id, currentChain, provider),
+		{
+			refreshDeps: [data?.id],
+			onSuccess: (data) => {
+				console.log(`teleportProps: ${data}`)
+			}
+		}
 	)
 
 	const { loading: ownerAddressLoading } = useRequest<string, [string]>(
@@ -442,9 +453,25 @@ const Entity: FC<EntityProps> = ({ data, chainProps, loading, playerPosition, on
                     </Button>
                   )} */}
 									<Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+										{
+											teleportProps && teleportProps.lastTeleportTime != 0 &&
+											Math.round(new Date().getTime() / 1000) <= teleportProps.cooldown + teleportProps.lastTeleportTime &&
+											(<Box sx={{
+												backgroundColor: '#BDBDBD', boxShadow: '0px 5px 15px rgba(189, 189, 189, 0.5), inset 0px -4px 0px rgba(0, 0, 0, 0.1)',
+												borderRadius: 15, width: 100, height: 40, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+													mr: 0.5
+											}}>
+												<Typography fontWeight={700} fontSize={20} color="#FFFFFF">
+													{teleportProps && new Date(teleportProps?.cooldown - (Math.round(new Date().getTime() / 1000) - teleportProps?.lastTeleportTime) * 1000).toISOString().substr(11, 8)}
+												</Typography>
+											</Box>)
+										}
+
 										{isOwnerOfEntity && (
 											<CustomIconButton
 												size='medium'
+												disabled={teleportProps && teleportProps.lastTeleportTime != 0 &&
+													Math.round(new Date().getTime() / 1000) <= teleportProps.cooldown + teleportProps.lastTeleportTime}
 												onClick={() => teleportToLand(data.id)}
 												color='secondary'
 												sx={{ mr: 2 }}

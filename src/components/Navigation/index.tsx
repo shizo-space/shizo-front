@@ -22,9 +22,9 @@ import useEvmWallet from '../../adaptors/evm-wallet-adaptor/useEvmWallet';
 const speeds = [5, 10, 25]
 
 const shenConsumption = [
-	0.5,
-	1.5,
-	5
+	1 / 20,
+	3 / 20,
+	6 / 20,
 ]
 
 const useStyle = makeStyles((theme: any) => ({
@@ -99,7 +99,7 @@ const RideOptionValue: FC<{
 			}} >
 				<RideValueIcon src={icon} />
 				<Box sx={{ display: 'flex', direction: 'column' }} >
-					<Typography fontSize={20} fontWeight={500} lineHeight="15px" sx={{mr: 0.5}}>{value}</Typography>
+					<Typography fontSize={20} fontWeight={500} lineHeight="15px" sx={{ mr: 0.5 }}>{value}</Typography>
 					<Typography fontSize={10} fontWeight={400} lineHeight="12px">{label}</Typography>
 				</Box>
 			</Box>
@@ -126,6 +126,7 @@ const RideOption: FC<{
 		const isActive = useMemo<boolean>(() => id === selectedId, [selectedId, id]);
 		return (
 			<Box sx={{
+				cursor: 'pointer',
 				width: 1, height: 140, p: 2.5, borderRadius: 5, mb: 2.5, display: 'flex', alignItems: 'stretch',
 				background: isActive ? 'rgba(132, 89, 255, 0.05)' : '#FAFAFA',
 				boxShadow: isActive ? '0px 5px 20px rgba(132, 89, 255, 0.3)' : 'none',
@@ -140,7 +141,7 @@ const RideOption: FC<{
 					<RideOptionIcon src={icon} />
 				</Box>
 				<Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: 'repeat( auto-fit, minmax(80px, 1fr))', gridGap: 10 }}>
-					<RideOptionValue icon={blue_value_icon} value={blueValue} label="" />
+					<RideOptionValue icon={blue_value_icon} value={blueValue} label="SHEN" />
 					<RideOptionValue icon={orange_value_icon} value={orangeValue} label="SHEN" />
 					<RideOptionValue icon={green_value_icon} value={greenValue} label="Min" />
 				</Box>
@@ -174,7 +175,7 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 		return 0
 	}
 	const calcTotalBurned = (type) => {
-		return distance * shenConsumption[type]
+		return Math.round(distance * shenConsumption[type])
 	}
 
 
@@ -195,7 +196,7 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 			onSuccess: (res) => {
 				console.log('<<<<<<<<<<>>>>>>>>>>>>>>>>')
 				console.log(res)
-				setDistance(Math.round(res?.data?.distance ?? 0 ))
+				setDistance(Math.round(res?.data?.distance ?? 0))
 				onRoute(res?.data?.polyline_path)
 				setSteps(res?.data?.route?.steps)
 			}
@@ -219,9 +220,6 @@ const Navigation: FC<NavigationProps> = ({ onBack, onStart, onRoute, destLat, de
 				<Box className={classes.top}>
 					<Box className={classes.itemSummary}>
 						{/* <ItemSummarySegment /> */}
-					</Box>
-					<Box sx={{ display: 'flex', mb: 1.25 }}>
-						<Typography fontSize={16} fontWeight={400} lineHeight="16px">Distance</Typography>
 					</Box>
 					<Box sx={{
 						width: 1, height: 88, display: 'flex', alignItems: 'center',

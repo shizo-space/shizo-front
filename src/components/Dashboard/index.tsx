@@ -30,6 +30,7 @@ const useStyle = makeStyles({
 		backgroundColor: '#FFFFFF',
 		borderRadius: 20,
 		borderTopRightRadius: 0,
+		borderTopLeftRadius: 0,
 		boxShadow: '0px 10px 25px rgba(0, 0, 0, 0.1), inset 0px -3px 0px rgba(0, 0, 0, 0.1)',
 		userSelect: 'none',
 		display: 'flex',

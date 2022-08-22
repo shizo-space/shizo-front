@@ -140,9 +140,9 @@ contract Shizo is ERC721 {
 		owner = msg.sender;
 
 		uint8 decimals = ERC20(shenAddress).decimals();
-		shenConsumption[0] = 0.5 * (10**decimals);
-		shenConsumption[1] = 1.5 * (10**decimals);
-		shenConsumption[2] = 5 * (10**decimals);
+		shenConsumption[0] = (1 * (10**decimals)) / 20;
+		shenConsumption[1] = (3 * (10**decimals)) / 20;
+		shenConsumption[2] = (6 * (10**decimals)) / 20;
 
 		teleportCooldown[1] = 60 * 60;
 		teleportCooldown[2] = 45 * 60;
@@ -357,7 +357,7 @@ contract Shizo is ERC721 {
 			address(this),
 			shenRequiredForUpgrade[entities[_tokenId].level]
 		);
-		entities[_tokenId].level++;
+		entities[_tokenId].level = entities[_tokenId].level + 1;
 	}
 
 	function listOnMarketplace(uint256 _tokenId, uint256 _price) public {
